@@ -1,7 +1,8 @@
+import bottom100Seed from "@/src/data/bottom-100-seed.json";
 import { calculateBadnessSummary } from "@/src/domain/core";
 import type { BookWork, Profile, Roast } from "@/src/domain/types";
 
-export const demoProfiles: Profile[] = [
+const baseProfiles: Profile[] = [
   {
     id: "profile-mara",
     handle: "mara_reads",
@@ -22,7 +23,26 @@ export const demoProfiles: Profile[] = [
   },
 ];
 
-export const demoBooks: BookWork[] = [
+const seedProfiles: Profile[] = (bottom100Seed.profiles as Array<{
+  id: string;
+  userId?: string;
+  handle: string;
+  displayName: string;
+  bio: string;
+  ageConfirmedAt?: string;
+}>).map((p) => ({
+  id: p.id,
+  userId: p.userId,
+  handle: p.handle,
+  displayName: p.displayName,
+  bio: p.bio,
+  ageConfirmedAt: p.ageConfirmedAt,
+}));
+
+export const demoProfiles: Profile[] = [...baseProfiles, ...seedProfiles];
+const profileMap = new Map(demoProfiles.map((p) => [p.id, p]));
+
+const baseBooks: BookWork[] = [
   {
     id: "book-midnight-library",
     slug: "the-midnight-library",
@@ -32,6 +52,7 @@ export const demoBooks: BookWork[] = [
     description: "A library between life and death promises infinite alternate lives. The premise is enormous. The execution is… a pamphlet.",
     coverTone: "lavender",
     sourceId: "OL20603503W",
+    coverUrl: "https://covers.openlibrary.org/b/olid/OL20603503W-M.jpg",
   },
   {
     id: "book-alchemist",
@@ -42,6 +63,7 @@ export const demoBooks: BookWork[] = [
     description: "A shepherd follows omens toward treasure and discovers that the real treasure was a series of extremely confident sentences.",
     coverTone: "acid",
     sourceId: "OL154623W",
+    coverUrl: "https://covers.openlibrary.org/b/olid/OL154623W-M.jpg",
   },
   {
     id: "book-atlas-shrugged",
@@ -52,6 +74,7 @@ export const demoBooks: BookWork[] = [
     description: "A 1,168-page philosophical thriller that asks what would happen if every character stopped having a conversation and started giving a speech.",
     coverTone: "coral",
     sourceId: "OL52293W",
+    coverUrl: "https://covers.openlibrary.org/b/olid/OL52293W-M.jpg",
   },
   {
     id: "book-fourth-wing",
@@ -62,10 +85,41 @@ export const demoBooks: BookWork[] = [
     description: "Dragons, war college, and a romance that treats communication as an optional side quest.",
     coverTone: "ink",
     sourceId: "OL49634116W",
+    coverUrl: "https://covers.openlibrary.org/b/olid/OL49634116W-M.jpg",
   },
 ];
 
-export const demoRoasts: Roast[] = [
+const seedBooks: BookWork[] = (bottom100Seed.books as Array<{
+  id: string;
+  providerWorkId: string;
+  slug: string;
+  title: string;
+  authors: string[];
+  firstPublished: number | null;
+  description: string;
+  coverTone: "coral" | "acid" | "lavender" | "ink";
+  coverUrl: string | null;
+}>).map((b) => ({
+  id: b.id,
+  slug: b.slug,
+  title: b.title,
+  authors: b.authors,
+  firstPublished: b.firstPublished,
+  description: b.description,
+  coverTone: b.coverTone,
+  coverUrl: b.coverUrl,
+  sourceId: b.providerWorkId,
+}));
+
+// Deduplicate books by slug
+const bookSlugMap = new Map<string, BookWork>();
+[...baseBooks, ...seedBooks].forEach((b) => {
+  if (!bookSlugMap.has(b.slug)) bookSlugMap.set(b.slug, b);
+});
+
+export const demoBooks: BookWork[] = Array.from(bookSlugMap.values());
+
+const baseRoasts: Roast[] = [
   {
     id: "roast-midnight-1",
     bookId: "book-midnight-library",
@@ -139,6 +193,44 @@ export const demoRoasts: Roast[] = [
     source: "discovery",
   },
 ];
+
+const seedRoasts: Roast[] = (bottom100Seed.roasts as Array<{
+  id: string;
+  bookId: string;
+  authorId: string;
+  hook: string;
+  body: string;
+  rating: 1 | 2 | 3 | 4 | 5;
+  flawTags: Array<"PACING" | "PROSE" | "PLOT" | "CHARACTERS" | "ARGUMENTS" | "WORLD_BUILDING" | "ENDING" | "EDITING" | "OTHER">;
+  spoiler: boolean;
+  fairCount: number;
+  funnyCount: number;
+  bookmarkCount: number;
+  status: "PUBLISHED";
+  createdAt: string;
+  updatedAt: string;
+}>).map((r) => {
+  const author = profileMap.get(r.authorId) ?? baseProfiles[0];
+  return {
+    id: r.id,
+    bookId: r.bookId,
+    authorId: r.authorId,
+    author,
+    hook: r.hook,
+    body: r.body,
+    rating: r.rating,
+    flawTags: r.flawTags,
+    spoiler: r.spoiler,
+    fairCount: r.fairCount,
+    funnyCount: r.funnyCount,
+    bookmarkCount: r.bookmarkCount,
+    status: r.status,
+    createdAt: r.createdAt,
+    updatedAt: r.updatedAt,
+  };
+});
+
+export const demoRoasts: Roast[] = [...baseRoasts, ...seedRoasts];
 
 export function getBookBySlug(slug: string) {
   return demoBooks.find((book) => book.slug === slug);

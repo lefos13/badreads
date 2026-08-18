@@ -1,15 +1,16 @@
 import Link from "next/link";
 import { BADNESS_LABELS } from "@/src/domain/core";
-import type { Roast } from "@/src/domain/types";
+import type { ReactionState, Roast } from "@/src/domain/types";
 import { ReactionButtons } from "./ReactionButtons";
 
 type RoastCardProps = {
   roast: Roast;
   bookTitle: string;
   bookSlug?: string;
+  reactionState?: ReactionState;
 };
 
-export function RoastCard({ roast, bookTitle, bookSlug }: RoastCardProps) {
+export function RoastCard({ roast, bookTitle, bookSlug, reactionState }: RoastCardProps) {
   return (
     <article className="roast-card">
       <div className="roast-topline">
@@ -24,7 +25,7 @@ export function RoastCard({ roast, bookTitle, bookSlug }: RoastCardProps) {
         <span className="badness-stars" title={BADNESS_LABELS[roast.rating]}>{"★".repeat(roast.rating)}{"☆".repeat(5 - roast.rating)}</span>
         <span className="mono"> {BADNESS_LABELS[roast.rating]}</span>
       </div>
-      <ReactionButtons roast={roast} />
+      <ReactionButtons initialState={reactionState} roast={roast} />
     </article>
   );
 }

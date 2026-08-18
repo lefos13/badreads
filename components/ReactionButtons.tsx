@@ -4,9 +4,9 @@ import { useState, useTransition } from "react";
 import { setBookmarkAction, setReactionAction } from "@/app/actions";
 import type { ReactionState, Roast } from "@/src/domain/types";
 
-export function ReactionButtons({ roast }: { roast: Roast }) {
+export function ReactionButtons({ roast, initialState }: { roast: Roast; initialState?: ReactionState }) {
   const [counts, setCounts] = useState({ fair: roast.fairCount, funny: roast.funnyCount, bookmark: roast.bookmarkCount });
-  const [active, setActive] = useState<ReactionState>({ fair: false, funny: false, bookmarked: false });
+  const [active, setActive] = useState<ReactionState>(initialState ?? { fair: false, funny: false, bookmarked: false });
   const [pending, startTransition] = useTransition();
 
   function react(kind: "FAIR" | "FUNNY") {

@@ -5,12 +5,20 @@ import { getDomainStore } from "@/src/domain/repository";
 type CatalogChoosePageProps = { searchParams: Promise<{ providerWorkId?: string }> };
 
 export const dynamic = "force-dynamic";
+const COVER_TONES = ["coral", "acid", "lavender", "ink"] as const;
+
+function determineCoverTone(providerWorkId: string): (typeof COVER_TONES)[number] {
+  let hash = 0;
+  for (let i = 0; i < providerWorkId.length; i++) {
+    hash = (hash * 31 + providerWorkId.charCodeAt(i)) >>> 0;
+  }
+  return COVER_TONES[hash % COVER_TONES.length];
+}
 
 function slugify(title: string, providerWorkId: string) {
   const titleSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 70);
   return `${titleSlug || "book"}-${providerWorkId.toLowerCase()}`;
 }
-
 export default async function CatalogChoosePage({ searchParams }: CatalogChoosePageProps) {
   const { providerWorkId } = await searchParams;
   if (!providerWorkId || !/^OL\d+W$/i.test(providerWorkId)) notFound();
@@ -24,7 +32,7 @@ export default async function CatalogChoosePage({ searchParams }: CatalogChooseP
     authors: result.authors.length ? result.authors : ["Unknown author"],
     firstPublished: result.firstPublished,
     description: "Catalog record imported from Open Library. Add the first evidence-backed verdict.",
-    coverTone: "acid",
+    coverTone: determineCoverTone(result.providerWorkId),
     sourceId: result.providerWorkId,
   });
   redirect(`/books/${book.slug}`);

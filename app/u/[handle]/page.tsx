@@ -4,7 +4,7 @@ import { FollowButton } from "@/components/FollowButton";
 import { RoastCard } from "@/components/RoastCard";
 import { demoProfiles } from "@/src/data/demo";
 import { getDomainStore } from "@/src/domain/repository";
-
+import { getSession } from "@/src/lib/session";
 type ProfilePageProps = { params: Promise<{ handle: string }> };
 
 export function generateStaticParams() {
@@ -24,10 +24,18 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const store = getDomainStore();
   const profile = await store.getProfileByHandle(handle);
   if (!profile) notFound();
-  const [allRoasts, books] = await Promise.all([store.listRoasts(), store.listBooks()]);
+  const session = await getSession();
+  const [allRoasts, books, isFollowingUser] = await Promise.all([
+    store.listRoasts(),
+    store.listBooks(),
+    session?.user?.id ? store.isFollowing(session.user.id, profile.id) : Promise.resolve(false),
+  ]);
   const roasts = allRoasts.filter((roast) => roast.authorId === profile.id && roast.status === "PUBLISHED");
+  const reactionStates = session?.user?.id
+    ? await store.getUserReactionStates(session.user.id, roasts.map((r) => r.id))
+    : {};
   const booksById = new Map(books.map((book) => [book.id, book] as const));
-
+  const isSelf = session?.user?.id === profile.id || session?.user?.id === profile.userId;
   return (
     <main className="page-width section">
       <section className="profile-hero">
@@ -36,7 +44,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           <span className="eyebrow mono">Public handle / private email</span>
           <h1 className="book-detail-title">@{profile.handle}</h1>
           <p className="hero-copy">{profile.bio}</p>
-          <FollowButton profileId={profile.id} />
+          {!isSelf ? <FollowButton initialFollowing={isFollowingUser} profileId={profile.id} /> : null}
         </div>
       </section>
       <section className="section profile-roasts">
@@ -44,7 +52,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         <div className="roast-list">
           {roasts.length ? roasts.map((roast) => {
             const book = booksById.get(roast.bookId);
-            return book ? <RoastCard bookSlug={book.slug} bookTitle={book.title} key={roast.id} roast={roast} /> : null;
+            return book ? <RoastCard bookSlug={book.slug} bookTitle={book.title} key={roast.id} reactionState={reactionStates[roast.id]} roast={roast} /> : null;
           }) : <div className="empty-state">This reviewer has not published a verdict yet.</div>}
         </div>
       </section>

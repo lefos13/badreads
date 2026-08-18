@@ -52,6 +52,8 @@ pnpm db:generate      # Generate Drizzle migration files from src/db/schema.ts
 pnpm db:migrate       # Apply migrations to configured DATABASE_URL
 pnpm db:seed          # Seed launch dataset into Postgres (tsx scripts/seed.ts)
 pnpm db:import        # Import starter catalog or custom books into Postgres (tsx scripts/import-books.ts)
+pnpm db:harvest       # Harvest ~10,000 Open Library works into dataset and/or DB (tsx scripts/harvest-open-library.ts)
+pnpm db:seed:bottom100 # Seed Bottom 100 worst bestsellers and 300 roasts (tsx scripts/seed-bottom-100.ts)
 pnpm audit --prod     # Audit production dependencies for vulnerabilities
 ```
 

@@ -28,6 +28,7 @@ pnpm db:generate
 pnpm db:migrate
 pnpm db:seed
 pnpm db:import
+pnpm db:seed:bottom100
 ```
 
 ## Product boundaries

@@ -7,6 +7,8 @@
 import { calculateBadnessSummary, composeFeed, validateRoastDraft, type ReactionKind } from "./core";
 import type {
   BookWork,
+  Bottom100Item,
+  Bottom100SortOption,
   ModerationAction,
   Profile,
   Report,
@@ -254,6 +256,45 @@ export function createMemoryStore(options: { seed?: boolean } = { seed: true }) 
     return { ok: true as const, data: clone(roast) };
   }
 
+  function getUserReactionStates(userId: string, roastIds: string[]): Record<string, { fair: boolean; funny: boolean; bookmarked: boolean }> {
+    const profile = getProfile(userId);
+    const result: Record<string, { fair: boolean; funny: boolean; bookmarked: boolean }> = {};
+    for (const roastId of roastIds) {
+      if (!profile) {
+        result[roastId] = { fair: false, funny: false, bookmarked: false };
+      } else {
+        result[roastId] = {
+          fair: state.reactions.has(reactionKey(roastId, profile.id, "FAIR")),
+          funny: state.reactions.has(reactionKey(roastId, profile.id, "FUNNY")),
+          bookmarked: state.bookmarks.has(bookmarkKey(profile.id, roastId)),
+        };
+      }
+    }
+    return result;
+  }
+
+  function isFollowing(followerUserId: string, followeeProfileId: string): boolean {
+    const follower = getProfile(followerUserId);
+    if (!follower) return false;
+    return state.follows.has(followKey(follower.id, followeeProfileId));
+  }
+
+  function listBookmarkedRoasts(userId: string): Roast[] {
+    const profile = getProfile(userId);
+    if (!profile) return [];
+    const prefix = `${profile.id}:`;
+    const bookmarkedRoastIds = new Set(
+      [...state.bookmarks]
+        .filter((key) => key.startsWith(prefix))
+        .map((key) => key.slice(prefix.length)),
+    );
+    return clone(
+      state.roasts
+        .filter((roast) => roast.status === "PUBLISHED" && bookmarkedRoastIds.has(roast.id))
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    );
+  }
+
   function reportRoast(input: { roastId: string; reporterId: string; category: ReportCategory; note?: string }) {
     const roast = getRoast(input.roastId);
     if (!roast) return { ok: false as const, code: "NOT_FOUND" as const, message: "That roast was not found." };
@@ -391,6 +432,77 @@ export function createMemoryStore(options: { seed?: boolean } = { seed: true }) 
     return clone(composeFeed({ following, discovery }));
   }
 
+  function listBottom100(sort: Bottom100SortOption = "shuffle"): Bottom100Item[] {
+    const roastsByBook = new Map<string, Roast[]>();
+    for (const roast of state.roasts) {
+      if (roast.status === "PUBLISHED") {
+        const list = roastsByBook.get(roast.bookId) ?? [];
+        list.push(roast);
+        roastsByBook.set(roast.bookId, list);
+      }
+    }
+
+    const candidates: Array<{
+      book: BookWork;
+      summary: { average: number | null; count: number; worstCount: number };
+      weightedScore: number;
+      topRoasts: Roast[];
+    }> = [];
+
+    for (const book of state.books) {
+      const bookRoasts = roastsByBook.get(book.id) ?? [];
+      if (bookRoasts.length === 0) continue;
+
+      const count = bookRoasts.length;
+      const worstCount = bookRoasts.filter((r) => r.rating === 5).length;
+      const average = count > 0 ? Number((bookRoasts.reduce((acc, r) => acc + r.rating, 0) / count).toFixed(1)) : null;
+      const weightedScore = average !== null
+        ? Number(((count * average + 2 * 3.0) / (count + 2)).toFixed(2))
+        : 0;
+
+      const topRoasts = [...bookRoasts]
+        .sort((a, b) => (2 * b.fairCount + b.funnyCount) - (2 * a.fairCount + a.funnyCount) || b.rating - a.rating)
+        .slice(0, 5);
+
+      candidates.push({
+        book: clone(book),
+        summary: { average, count, worstCount },
+        weightedScore,
+        topRoasts: clone(topRoasts),
+      });
+    }
+
+    candidates.sort((a, b) => {
+      const aQualified = a.summary.count >= 3 ? 1 : 0;
+      const bQualified = b.summary.count >= 3 ? 1 : 0;
+      if (aQualified !== bQualified) return bQualified - aQualified;
+      return b.weightedScore - a.weightedScore || b.summary.count - a.summary.count;
+    });
+
+    const ranked: Bottom100Item[] = candidates.slice(0, 100).map((item, index) => ({
+      rank: index + 1,
+      book: item.book,
+      summary: item.summary,
+      weightedScore: item.weightedScore,
+      topRoasts: item.topRoasts,
+    }));
+
+    if (sort === "badness") return ranked;
+    if (sort === "roasts") return [...ranked].sort((a, b) => b.summary.count - a.summary.count || a.rank - b.rank);
+    if (sort === "title") return [...ranked].sort((a, b) => a.book.title.localeCompare(b.book.title));
+
+    const shuffled = [...ranked];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
+  function listModerationActions(): ModerationAction[] {
+    return clone([...state.moderationActions].sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+  }
+
   return {
     createProfile,
     createRoast,
@@ -413,9 +525,14 @@ export function createMemoryStore(options: { seed?: boolean } = { seed: true }) 
     setBookmark,
     setFollow,
     setReaction,
+    getUserReactionStates,
+    isFollowing,
+    listBookmarkedRoasts,
     searchBooks,
+    listBottom100,
     upsertBook,
     updateRoast,
+    listModerationActions,
   };
 }
 

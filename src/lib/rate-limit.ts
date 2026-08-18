@@ -40,8 +40,8 @@ export async function consumeRateLimit(key: string, limit: number, windowMs: num
   await db.insert(rateLimitBuckets).values({ key, count: 1, windowStartedAt: now }).onConflictDoUpdate({
     target: rateLimitBuckets.key,
     set: {
-      count: sql`CASE WHEN ${rateLimitBuckets.windowStartedAt} <= ${cutoff} THEN 1 ELSE ${rateLimitBuckets.count} + 1 END`,
-      windowStartedAt: sql`CASE WHEN ${rateLimitBuckets.windowStartedAt} <= ${cutoff} THEN ${now} ELSE ${rateLimitBuckets.windowStartedAt} END`,
+      count: sql`CASE WHEN ${rateLimitBuckets.windowStartedAt} <= ${cutoff.toISOString()}::timestamptz THEN 1 ELSE ${rateLimitBuckets.count} + 1 END`,
+      windowStartedAt: sql`CASE WHEN ${rateLimitBuckets.windowStartedAt} <= ${cutoff.toISOString()}::timestamptz THEN ${now.toISOString()}::timestamptz ELSE ${rateLimitBuckets.windowStartedAt} END`,
     },
   });
   const [bucket] = await db.select().from(rateLimitBuckets).where(sql`${rateLimitBuckets.key} = ${key}`).limit(1);
@@ -50,6 +50,9 @@ export async function consumeRateLimit(key: string, limit: number, windowMs: num
   return { allowed: bucket.count <= limit, remaining: Math.max(0, limit - bucket.count), retryAfterSeconds };
 }
 
-export function resetRateLimits() {
+export async function resetRateLimits() {
   memoryBuckets.clear();
+  if (db) {
+    await db.delete(rateLimitBuckets);
+  }
 }

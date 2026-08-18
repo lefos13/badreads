@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BADNESS_LABELS } from "@/src/domain/core";
 import { getDomainStore } from "@/src/domain/repository";
+import type { ReactionState } from "@/src/domain/types";
 import { ReactionButtons } from "@/components/ReactionButtons";
 import { ReportForm } from "@/components/ReportForm";
 import { hasModeratorAccess } from "@/src/lib/authorization";
@@ -24,7 +25,10 @@ export default async function RoastPage({ params }: RoastPageProps) {
   const roast = await store.getRoast(id);
   if (!roast) notFound();
   const session = await getSession();
-  const viewerProfile = session ? await store.getProfile(session.user.id) : undefined;
+  const [viewerProfile, reactionStates] = await Promise.all([
+    session ? store.getProfile(session.user.id) : Promise.resolve(undefined),
+    session?.user?.id ? store.getUserReactionStates(session.user.id, [roast.id]) : Promise.resolve<Record<string, ReactionState>>({}),
+  ]);
   if (roast.status !== "PUBLISHED" && viewerProfile?.id !== roast.authorId && !(await hasModeratorAccess())) notFound();
   const book = await store.getBook(roast.bookId);
   if (!book) notFound();
@@ -42,7 +46,7 @@ export default async function RoastPage({ params }: RoastPageProps) {
       </div>
       {roast.spoiler ? <details className="spoiler-box roast-long-body"><summary>Spoiler evidence — reveal</summary><p className="hero-copy">{roast.body}</p></details> : <p className="hero-copy roast-long-body">{roast.body}</p>}
       <div className="tag-grid tag-list">{roast.flawTags.map((tag) => <span className="tag-option selected" key={tag}>{tag.replaceAll("_", " ")}</span>)}</div>
-      {roast.status === "PUBLISHED" ? <><ReactionButtons roast={roast} /><ReportForm roastId={roast.id} /></> : null}
+      {roast.status === "PUBLISHED" ? <><ReactionButtons initialState={reactionStates[roast.id]} roast={roast} /><ReportForm roastId={roast.id} /></> : null}
       <div className="hero-actions">
         <Link className="button button-primary" href={`/books/${book.slug}`}>See all roasts</Link>
         <Link className="button button-quiet" href={`/write?book=${book.slug}`}>Add your verdict</Link>

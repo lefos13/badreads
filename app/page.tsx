@@ -2,6 +2,8 @@ import Link from "next/link";
 import { BookCard } from "@/components/BookCard";
 import { RoastCard } from "@/components/RoastCard";
 import { getDomainStore } from "@/src/domain/repository";
+import type { ReactionState } from "@/src/domain/types";
+import { getSession } from "@/src/lib/session";
 
 /*
  * Public discovery reads through the same async domain store as mutations.
@@ -12,10 +14,15 @@ import { getDomainStore } from "@/src/domain/repository";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  const session = await getSession();
   const store = getDomainStore();
-  const [books, feed] = await Promise.all([store.listBooks(), store.listFeed()]);
-  const summaries = new Map(await Promise.all(books.map(async (book) => [book.id, await store.getBookSummary(book.id)] as const)));
-
+  const [books, feed] = await Promise.all([store.listBooks(), store.listFeed(session?.user?.id)]);
+  const previewRoasts = feed.slice(0, 3);
+  const [summariesList, reactionStates] = await Promise.all([
+    Promise.all(books.map(async (book) => [book.id, await store.getBookSummary(book.id)] as const)),
+    session?.user?.id ? store.getUserReactionStates(session.user.id, previewRoasts.map((r) => r.id)) : Promise.resolve<Record<string, ReactionState>>({}),
+  ]);
+  const summaries = new Map(summariesList);
   return (
     <main>
       <section className="hero">
@@ -59,9 +66,9 @@ export default async function HomePage() {
         </div>
         <div className="feed-grid">
           <div className="roast-list">
-            {feed.slice(0, 3).map((roast) => {
+            {previewRoasts.map((roast) => {
               const book = books.find((candidate) => candidate.id === roast.bookId);
-              return book ? <RoastCard key={roast.id} roast={roast} bookSlug={book.slug} bookTitle={book.title} /> : null;
+              return book ? <RoastCard bookSlug={book.slug} bookTitle={book.title} key={roast.id} reactionState={reactionStates[roast.id]} roast={roast} /> : null;
             })}
           </div>
           <aside className="side-note">

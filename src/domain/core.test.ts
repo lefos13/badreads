@@ -12,14 +12,20 @@ describe("Badreads product rules", () => {
     expect(BADNESS_LABELS[1]).toBe("Barely Bad");
   });
 
-  it("calculates a work summary from score-bearing roasts", () => {
-    expect(
-      calculateBadnessSummary([
-        { rating: 5 },
-        { rating: 3 },
-        { rating: 4 },
-      ]),
-    ).toEqual({ average: 4, count: 3, worstCount: 1 });
+  it("calculates a work summary from score-bearing roasts with flaw tag counts", () => {
+    const summary = calculateBadnessSummary([
+      { rating: 5, flawTags: ["PROSE", "PACING"] },
+      { rating: 3, flawTags: ["PROSE"] },
+      { rating: 4, flawTags: ["PLOT"] },
+    ]);
+
+    expect(summary.average).toBe(4);
+    expect(summary.count).toBe(3);
+    expect(summary.worstCount).toBe(1);
+    expect(summary.flawCounts.PROSE).toBe(2);
+    expect(summary.flawCounts.PACING).toBe(1);
+    expect(summary.flawCounts.PLOT).toBe(1);
+    expect(summary.flawCounts.CHARACTERS).toBe(0);
   });
 
   it("requires a hook, evidence, rating, and flaw tag", () => {

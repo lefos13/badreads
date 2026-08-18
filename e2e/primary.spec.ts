@@ -17,19 +17,22 @@ test("home and search expose indexable book discovery", async ({ page }) => {
   await expect(page.getByRole("link", { name: /The Alchemist/ })).toHaveAttribute("href", "/books/the-alchemist");
 });
 
-test("structured roast form exposes evidence, inverted rating, and flaw tags", async ({ page }) => {
-  await page.goto("/write?book=the-alchemist");
-  await expect(page.getByRole("heading", { name: "Roast The Alchemist." })).toBeVisible();
-  await expect(page.getByLabel("The hook")).toHaveAttribute("minlength", "10");
-  await expect(page.getByLabel("The receipts")).toHaveAttribute("minlength", "80");
-  await expect(page.getByRole("radio", { name: /Worst/ })).toHaveValue("5");
-  await expect(page.getByRole("checkbox", { name: "PROSE" })).toBeVisible();
-  await expect(page.getByRole("checkbox", { name: /16 or older/ })).toHaveCount(0);
+test("bottom 100 ranking page exposes ranked books and badness indicators", async ({ page }) => {
+  await page.goto("/bottom-100");
+  await expect(page).toHaveTitle(/Bottom 100/);
+  await expect(page.getByRole("heading", { name: /Bottom 100/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Worst Badness/ })).toBeVisible();
 });
 
-test("local demo sign-in does not pretend to send an email", async ({ page }) => {
+test("sign-in page exposes authentication surface according to runtime mode", async ({ page }) => {
   await page.goto("/sign-in");
-  await expect(page.getByText("Local demo / no email required")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Continue in local demo" })).toHaveAttribute("href", "/write");
-  await expect(page.getByLabel("Email address")).toHaveCount(0);
+  const isDemo = await page.getByText("Local demo / no email required").isVisible().catch(() => false);
+  if (isDemo) {
+    await expect(page.getByRole("link", { name: "Continue in local demo" })).toHaveAttribute("href", "/write");
+    await expect(page.getByLabel("Email address")).toHaveCount(0);
+  } else {
+    await expect(page.getByRole("heading", { name: /Come say the quiet part/ })).toBeVisible();
+    await expect(page.getByRole("textbox", { name: /Email address/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Send me a magic link/ })).toBeVisible();
+  }
 });

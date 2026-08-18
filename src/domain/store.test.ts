@@ -135,4 +135,35 @@ describe("memory product store", () => {
     const blankMatches = store.searchBooks("   ");
     expect(blankMatches).toHaveLength(0);
   });
+
+  it("queries user reaction states, follow status, and bookmarked roasts", () => {
+    const store = createMemoryStore({ seed: true });
+    const roasts = store.listRoasts();
+    const roast1 = roasts[0];
+    const roast2 = roasts[1];
+    const profile = store.createProfile({ handle: "active-reader", displayName: "Active", bio: "" });
+    expect(profile.ok).toBe(true);
+    if (!profile.ok) return;
+
+    // Reactions and bookmarks
+    store.setReaction({ roastId: roast1.id, userId: profile.data.id, kind: "FAIR", active: true });
+    store.setBookmark({ userId: profile.data.id, roastId: roast1.id, active: true });
+
+    const states = store.getUserReactionStates(profile.data.id, [roast1.id, roast2.id]);
+    expect(states[roast1.id]).toEqual({ fair: true, funny: false, bookmarked: true });
+    expect(states[roast2.id]).toEqual({ fair: false, funny: false, bookmarked: false });
+
+    // Follows
+    const authorId = roast1.authorId;
+    expect(store.isFollowing(profile.data.id, authorId)).toBe(false);
+    store.setFollow({ followerId: profile.data.id, followeeId: authorId, active: true });
+    expect(store.isFollowing(profile.data.id, authorId)).toBe(true);
+    store.setFollow({ followerId: profile.data.id, followeeId: authorId, active: false });
+    expect(store.isFollowing(profile.data.id, authorId)).toBe(false);
+
+    // List bookmarked roasts
+    const bookmarked = store.listBookmarkedRoasts(profile.data.id);
+    expect(bookmarked.map((r) => r.id)).toContain(roast1.id);
+    expect(bookmarked.map((r) => r.id)).not.toContain(roast2.id);
+  });
 });

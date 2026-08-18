@@ -13,6 +13,7 @@ export type BookImportItem = {
   description?: string | null;
   coverTone?: "coral" | "acid" | "lavender" | "ink";
   isbn?: string | null;
+  coverUrl?: string | null;
 };
 
 const COVER_TONES = ["coral", "acid", "lavender", "ink"] as const;
@@ -135,7 +136,7 @@ export async function importBooksToDatabase(
         authors: item.authors.length ? item.authors : ["Unknown author"],
         firstPublished: item.firstPublished ?? null,
         description: item.description ?? "A popular book awaiting its first evidence-backed roast.",
-        coverUrl: isOL ? `https://covers.openlibrary.org/b/olid/${item.providerWorkId}-M.jpg` : null,
+        coverUrl: item.coverUrl ?? (isOL ? `https://covers.openlibrary.org/b/olid/${item.providerWorkId}-M.jpg` : null),
         metadata: { coverTone },
         updatedAt: new Date(),
       };
@@ -156,7 +157,7 @@ export async function importBooksToDatabase(
           updatedAt: sql`excluded.updated_at`,
         },
       })
-      .returning({ id: bookWorks.id, providerWorkId: bookWorks.providerWorkId });
+      .returning();
 
     const identifierValues = [];
     for (let j = 0; j < chunk.length; j++) {

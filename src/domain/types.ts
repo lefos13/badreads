@@ -15,6 +15,7 @@ export type BookWork = {
   description: string;
   coverTone: "coral" | "acid" | "lavender" | "ink";
   sourceId?: string;
+  coverUrl?: string | null;
 };
 
 export type Profile = {
@@ -51,6 +52,13 @@ export type ReactionState = {
   bookmarked: boolean;
 };
 
+export type BookSummary = {
+  average: number | null;
+  count: number;
+  worstCount: number;
+  flawCounts: Record<FlawTag, number>;
+};
+
 export type ReactionUpdate = {
   roastId: string;
   kind: ReactionKind;
@@ -71,6 +79,19 @@ export type Report = {
   createdAt: string;
 };
 
+export type ReportWithContext = Report & {
+  roast?: {
+    hook: string;
+    body: string;
+    rating: BadnessRating;
+    spoiler: boolean;
+    authorHandle: string;
+    bookTitle: string;
+    bookSlug?: string;
+    status: RoastStatus;
+  };
+};
+
 export type ModerationAction = {
   id: string;
   roastId: string;
@@ -78,4 +99,18 @@ export type ModerationAction = {
   decision: "APPROVE" | "REJECT" | "RESTORE" | "REMOVE" | "WARN" | "SUSPEND" | "BAN";
   note?: string;
   createdAt: string;
+};
+
+export type Bottom100SortOption = "shuffle" | "badness" | "roasts" | "title";
+
+export type Bottom100Item = {
+  rank: number;
+  book: BookWork;
+  summary: {
+    average: number | null;
+    count: number;
+    worstCount: number;
+  };
+  weightedScore: number;
+  topRoasts: Roast[];
 };

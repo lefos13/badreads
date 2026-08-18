@@ -40,18 +40,37 @@ export const profileDraftSchema = z.object({
 
 export type ProfileDraft = z.input<typeof profileDraftSchema>;
 
-export type RoastSummaryInput = { rating: BadnessRating };
+export type RoastSummaryInput = { rating: BadnessRating; flawTags?: readonly FlawTag[] | FlawTag[] };
 
 export function calculateBadnessSummary(roasts: RoastSummaryInput[]) {
+  const flawCounts = FLAW_TAGS.reduce(
+    (acc, tag) => {
+      acc[tag] = 0;
+      return acc;
+    },
+    {} as Record<FlawTag, number>,
+  );
+
   if (roasts.length === 0) {
-    return { average: null, count: 0, worstCount: 0 };
+    return { average: null, count: 0, worstCount: 0, flawCounts };
   }
 
   const total = roasts.reduce((sum, roast) => sum + roast.rating, 0);
+  for (const roast of roasts) {
+    if (roast.flawTags) {
+      for (const tag of roast.flawTags) {
+        if (tag in flawCounts) {
+          flawCounts[tag] = (flawCounts[tag] ?? 0) + 1;
+        }
+      }
+    }
+  }
+
   return {
     average: Number((total / roasts.length).toFixed(1)),
     count: roasts.length,
     worstCount: roasts.filter((roast) => roast.rating === 5).length,
+    flawCounts,
   };
 }
 

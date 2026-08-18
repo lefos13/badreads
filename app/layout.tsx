@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SiteHeader } from "@/components/SiteHeader";
 import { resolveAppUrl } from "@/src/lib/url-config";
 import "./globals.css";
 
@@ -19,17 +20,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body>
         <div className="site-shell">
-          <header className="site-header">
-            <Link className="brand" href="/">
-              <span className="brand-mark">✳</span>badreads
-            </Link>
-            <nav aria-label="Primary navigation" className="header-nav">
-              <Link className="header-link" href="/search">Find a book</Link>
-              <Link className="header-link" href="/feed">The feed</Link>
-              <Link className="header-link" href="/account">Account</Link>
-              <Link className="button button-primary" href="/write">Write a roast</Link>
-            </nav>
-          </header>
+          <SiteHeader />
           {children}
           <footer className="footer">
             <div className="page-width footer-inner">
