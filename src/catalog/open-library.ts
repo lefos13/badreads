@@ -30,6 +30,7 @@ export type CatalogSearchResult = {
 type ProviderOptions = {
   fetcher?: typeof fetch;
   contactEmail?: string;
+  timeoutMs?: number;
 };
 
 function stringArray(value: unknown) {
@@ -45,30 +46,38 @@ function normalizeWorkId(value: unknown) {
 export class OpenLibraryProvider {
   private readonly fetcher: typeof fetch;
   private readonly contactEmail: string;
+  private readonly timeoutMs: number;
 
   constructor(options: ProviderOptions = {}) {
     this.fetcher = options.fetcher ?? fetch;
     this.contactEmail = options.contactEmail ?? "contact@badreads.example";
+    this.timeoutMs = options.timeoutMs ?? 8_000;
   }
 
   async search(query: string, cursor = "0", limit = 10): Promise<CatalogSearchResult> {
+    const pageSize = Math.min(20, Math.max(1, Math.trunc(limit)));
     const offset = Number.parseInt(cursor, 10);
     const safeOffset = Number.isFinite(offset) && offset >= 0 ? offset : 0;
     const url = new URL("https://openlibrary.org/search.json");
     url.searchParams.set("q", query.trim());
-    url.searchParams.set("page", String(Math.floor(safeOffset / limit) + 1));
-    url.searchParams.set("limit", String(limit));
+    url.searchParams.set("page", String(Math.floor(safeOffset / pageSize) + 1));
+    url.searchParams.set("limit", String(pageSize));
     url.searchParams.set("fields", "key,title,author_name,first_publish_year,cover_i,isbn");
 
     let response: Response;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
     try {
       response = await this.fetcher(url.toString(), {
         headers: { "User-Agent": `Badreads/0.1 (${this.contactEmail})` },
+        signal: controller.signal,
         next: { revalidate: 86_400 },
       });
     } catch {
+      clearTimeout(timeout);
       throw new Error("Catalog search is temporarily unavailable.");
     }
+    clearTimeout(timeout);
     if (!response.ok) throw new Error("Catalog search is temporarily unavailable.");
 
     let json: unknown;
@@ -86,7 +95,11 @@ export class OpenLibraryProvider {
       const title = typeof doc.title === "string" ? doc.title.trim() : "";
       if (!providerWorkId || !title) return [];
       const coverId = typeof doc.cover_i === "number" ? doc.cover_i : null;
-      const identifiers = stringArray(doc.isbn).slice(0, 5).map((value) => ({ scheme: "ISBN" as const, value }));
+      const identifiers = [...new Set(stringArray(doc.isbn)
+        .map((value) => value.replace(/[^0-9Xx]/g, "").toUpperCase())
+        .filter((value) => value.length === 10 || value.length === 13))]
+        .slice(0, 5)
+        .map((value) => ({ scheme: "ISBN" as const, value }));
       return [{
         provider: "openlibrary",
         providerWorkId,
@@ -98,11 +111,12 @@ export class OpenLibraryProvider {
       }];
     });
 
-    const nextOffset = safeOffset + results.length;
+    const uniqueResults = [...new Map(results.map((result) => [result.providerWorkId, result])).values()];
+    const nextOffset = safeOffset + uniqueResults.length;
     return {
       total: parsed.data.numFound,
-      results,
-      nextCursor: nextOffset < parsed.data.numFound ? String(nextOffset) : null,
+      results: uniqueResults,
+      nextCursor: uniqueResults.length > 0 && nextOffset < parsed.data.numFound ? String(nextOffset) : null,
     };
   }
 }

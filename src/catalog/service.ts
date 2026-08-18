@@ -24,3 +24,12 @@ export async function searchCatalog(query: string, cursor = "0"): Promise<Catalo
   const results = searchDemoBooks(query).map(demoCatalogResult);
   return { total: results.length, results, nextCursor: null };
 }
+
+export async function resolveCatalogWork(providerWorkId: string) {
+  const local = demoBooks.find((book) => book.sourceId === providerWorkId);
+  if (local) return demoCatalogResult(local);
+  if (process.env.OPEN_LIBRARY_LIVE !== "true") return null;
+  const provider = new OpenLibraryProvider({ contactEmail: process.env.OPEN_LIBRARY_CONTACT_EMAIL });
+  const result = await provider.search(providerWorkId);
+  return result.results.find((book) => book.providerWorkId === providerWorkId) ?? null;
+}

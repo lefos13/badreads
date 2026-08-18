@@ -1,0 +1,1 @@
+ALTER TABLE "roast" ADD CONSTRAINT "roast_rating_range" CHECK ("roast"."rating" between 1 and 5);

@@ -14,7 +14,7 @@ export function BookCard({ book, average, roastCount = 0 }: BookCardProps) {
         <span className="cover-title">{book.title}</span>
       </div>
       <h3>{book.title}</h3>
-      <p className="book-meta">{book.authors.join(", ")} · {book.firstPublished}</p>
+      <p className="book-meta">{book.authors.join(", ")} · {book.firstPublished ?? "unknown year"}</p>
       <div className="badness-line">
         <span aria-label={average ? `${average} bad stars` : "No ratings yet"} className="badness-stars">
           {average ? "★★★★★".slice(0, Math.round(average)) : "☆☆☆☆☆"}
