@@ -47,3 +47,26 @@ export type ReactionUpdate = {
   kind: ReactionKind;
   active: boolean;
 };
+
+export type RoastStatus = "PENDING_REVIEW" | "PUBLISHED" | "REJECTED" | "REMOVED";
+
+export type ReportCategory = "PERSONAL_ATTACK" | "HATE" | "SPOILER" | "SPAM" | "COPYRIGHT" | "OTHER";
+
+export type Report = {
+  id: string;
+  roastId: string;
+  reporterId: string;
+  category: ReportCategory;
+  note?: string;
+  status: "OPEN" | "UPHELD" | "DISMISSED";
+  createdAt: string;
+};
+
+export type ModerationAction = {
+  id: string;
+  roastId: string;
+  moderatorId: string;
+  decision: "APPROVE" | "REJECT" | "RESTORE" | "REMOVE" | "WARN" | "SUSPEND" | "BAN";
+  note?: string;
+  createdAt: string;
+};
