@@ -1,3 +1,9 @@
+/*
+ * These records are the domain boundary shared by server components, actions,
+ * tests, and the future HTTP service. Keeping persistence details out of them
+ * lets a Postgres repository replace the local demo store without rewriting UI.
+ */
+
 import type { BadnessRating, FlawTag, ReactionKind } from "./core";
 
 export type BookWork = {
@@ -5,7 +11,7 @@ export type BookWork = {
   slug: string;
   title: string;
   authors: string[];
-  firstPublished: number;
+  firstPublished: number | null;
   description: string;
   coverTone: "coral" | "acid" | "lavender" | "ink";
   sourceId?: string;
@@ -13,9 +19,11 @@ export type BookWork = {
 
 export type Profile = {
   id: string;
+  userId?: string;
   handle: string;
   displayName: string;
   bio: string;
+  ageConfirmedAt?: string;
 };
 
 export type Roast = {
@@ -29,6 +37,7 @@ export type Roast = {
   flawTags: FlawTag[];
   spoiler: boolean;
   createdAt: string;
+  updatedAt: string;
   fairCount: number;
   funnyCount: number;
   bookmarkCount: number;

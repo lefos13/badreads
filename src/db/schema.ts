@@ -7,6 +7,7 @@
 
 import {
   boolean,
+  check,
   integer,
   jsonb,
   pgEnum,
@@ -17,6 +18,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const userRole = pgEnum("user_role", ["MEMBER", "MODERATOR", "ADMIN"]);
 export const userStatus = pgEnum("user_status", ["ACTIVE", "SUSPENDED", "BANNED", "DELETED"]);
@@ -121,7 +123,10 @@ export const roasts = pgTable("roast", {
   bookmarkCount: integer("bookmark_count").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => ({ onePerBook: uniqueIndex("roast_author_book_idx").on(table.authorProfileId, table.bookWorkId) }));
+}, (table) => ({
+  onePerBook: uniqueIndex("roast_author_book_idx").on(table.authorProfileId, table.bookWorkId),
+  ratingRange: check("roast_rating_range", sql`${table.rating} between 1 and 5`),
+}));
 
 export const reactions = pgTable("reaction", {
   roastId: uuid("roast_id").notNull().references(() => roasts.id, { onDelete: "cascade" }),

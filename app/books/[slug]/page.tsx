@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { RoastCard } from "@/components/RoastCard";
-import { demoBooks, getBookBySlug, getBookSummary, getRoastsForBook } from "@/src/data/demo";
+import { demoBooks } from "@/src/data/demo";
+import { memoryStore } from "@/src/domain/store";
 
 type BookPageProps = { params: Promise<{ slug: string }> };
 
@@ -10,18 +11,20 @@ export function generateStaticParams() {
   return demoBooks.map((book) => ({ slug: book.slug }));
 }
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: BookPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const book = getBookBySlug(slug);
+  const book = memoryStore.getBookBySlug(slug);
   return book ? { title: `${book.title} — Badreads`, description: book.description } : {};
 }
 
 export default async function BookPage({ params }: BookPageProps) {
   const { slug } = await params;
-  const book = getBookBySlug(slug);
+  const book = memoryStore.getBookBySlug(slug);
   if (!book) notFound();
-  const summary = getBookSummary(book.id);
-  const roasts = getRoastsForBook(book.id);
+  const summary = memoryStore.getBookSummary(book.id);
+  const roasts = memoryStore.getRoastsForBook(book.id);
 
   return (
     <main>
@@ -31,7 +34,7 @@ export default async function BookPage({ params }: BookPageProps) {
             <span className="cover-title">{book.title}</span>
           </div>
           <div>
-            <span className="eyebrow mono">The case against / {book.firstPublished}</span>
+            <span className="eyebrow mono">The case against / {book.firstPublished ?? "unknown year"}</span>
             <h1 className="book-detail-title">{book.title}</h1>
             <p className="book-meta">By {book.authors.join(", ")}</p>
             <p className="book-description">{book.description}</p>

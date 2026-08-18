@@ -10,7 +10,15 @@ type SearchPageProps = {
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
-  const result = query.length >= 2 ? await searchCatalog(query) : null;
+  let result = null;
+  let upstreamError = false;
+  if (query.length >= 2) {
+    try {
+      result = await searchCatalog(query);
+    } catch {
+      upstreamError = true;
+    }
+  }
 
   return (
     <main className="page-width search-shell">
@@ -22,13 +30,14 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <input className="text-input" defaultValue={query} id="book-search" name="q" placeholder="Try The Alchemist, Fourth Wing…" type="search" />
         <button className="button button-primary" type="submit">Search</button>
       </form>
-      {query && !result ? <p className="form-error">Search for at least two characters.</p> : null}
+      {query && !result && !upstreamError ? <p className="form-error">Search for at least two characters.</p> : null}
+      {upstreamError ? <p className="form-error" role="alert">The catalog is taking a break. Try again in a moment.</p> : null}
       {result ? (
         <div aria-live="polite" className="search-results">
           {result.results.length ? result.results.map((book) => {
             const localSlug = "slug" in book ? book.slug : undefined;
             return (
-            <Link className="search-result" href={localSlug ? `/books/${localSlug}` : `/write?providerWorkId=${book.providerWorkId}`} key={book.providerWorkId}>
+            <Link className="search-result" href={localSlug ? `/books/${localSlug}` : `/catalog/choose?providerWorkId=${encodeURIComponent(book.providerWorkId)}`} key={book.providerWorkId}>
               <span aria-hidden="true" className="search-result-cover" />
               <span>
                 <h2>{book.title}</h2>

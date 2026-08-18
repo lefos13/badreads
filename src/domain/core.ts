@@ -31,6 +31,15 @@ export const FLAW_TAGS = [
 
 export type FlawTag = (typeof FLAW_TAGS)[number];
 
+export const profileDraftSchema = z.object({
+  handle: z.string().trim().min(3, "Your handle needs at least three characters.").max(24, "Keep your handle under 24 characters.").regex(/^[a-zA-Z0-9_]+$/, "Use letters, numbers, or underscores only."),
+  displayName: z.string().trim().min(1, "Add a display name.").max(60, "Keep your display name under 60 characters."),
+  bio: z.string().trim().max(160, "Keep your bio under 160 characters."),
+  ageConfirmed: z.literal(true, { errorMap: () => ({ message: "You must confirm that you are 16 or older." }) }),
+});
+
+export type ProfileDraft = z.input<typeof profileDraftSchema>;
+
 export type RoastSummaryInput = { rating: BadnessRating };
 
 export function calculateBadnessSummary(roasts: RoastSummaryInput[]) {

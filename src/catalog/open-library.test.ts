@@ -13,7 +13,7 @@ describe("OpenLibraryProvider", () => {
             author_name: ["A. Reader"],
             first_publish_year: 2022,
             cover_i: 987,
-            isbn: ["9781234567890"],
+            isbn: ["978-1-2345-6789-0", "9781234567890"],
           }],
         }),
       ),
@@ -45,5 +45,18 @@ describe("OpenLibraryProvider", () => {
     const provider = new OpenLibraryProvider({ fetcher: vi.fn().mockResolvedValue(new Response("not-json", { status: 502 })) as typeof fetch });
 
     await expect(provider.search("broken")).rejects.toThrow("Catalog search is temporarily unavailable.");
+  });
+
+  it("deduplicates repeated provider works", async () => {
+    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      numFound: 2,
+      docs: [
+        { key: "/works/OL123W", title: "A Difficult Book" },
+        { key: "/works/OL123W", title: "A Difficult Book" },
+      ],
+    })));
+    const provider = new OpenLibraryProvider({ fetcher: fetcher as typeof fetch });
+    const result = await provider.search("difficult book");
+    expect(result.results).toHaveLength(1);
   });
 });

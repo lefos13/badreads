@@ -1,10 +1,19 @@
 import Link from "next/link";
 import { BookCard } from "@/components/BookCard";
 import { RoastCard } from "@/components/RoastCard";
-import { getBookSummary, getDemoFeed, demoBooks } from "@/src/data/demo";
+import { memoryStore } from "@/src/domain/store";
+
+/*
+ * Public discovery reads through the same domain store as mutations. This is
+ * deliberately dynamic for the demo runtime so a newly published roast is
+ * visible immediately; a Postgres repository can keep the page indexable.
+ */
+
+export const dynamic = "force-dynamic";
 
 export default function HomePage() {
-  const feed = getDemoFeed();
+  const books = memoryStore.listBooks();
+  const feed = memoryStore.listFeed();
 
   return (
     <main>
@@ -35,8 +44,8 @@ export default function HomePage() {
           <p>Popular books, unpopular opinions, and enough evidence to make the group chat pause.</p>
         </div>
         <div className="book-grid">
-          {demoBooks.map((book) => {
-            const summary = getBookSummary(book.id);
+          {books.map((book) => {
+            const summary = memoryStore.getBookSummary(book.id);
             return <BookCard key={book.id} book={book} average={summary.average} roastCount={summary.count} />;
           })}
         </div>
@@ -50,7 +59,7 @@ export default function HomePage() {
         <div className="feed-grid">
           <div className="roast-list">
             {feed.slice(0, 3).map((roast) => {
-              const book = demoBooks.find((candidate) => candidate.id === roast.bookId);
+              const book = books.find((candidate) => candidate.id === roast.bookId);
               return book ? <RoastCard key={roast.id} roast={roast} bookSlug={book.slug} bookTitle={book.title} /> : null;
             })}
           </div>
