@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { RoastForm } from "@/components/RoastForm";
-import { memoryStore } from "@/src/domain/store";
+import { getDomainStore } from "@/src/domain/repository";
 import { getSession } from "@/src/lib/session";
 
 type WritePageProps = { searchParams: Promise<{ book?: string }> };
@@ -11,9 +11,10 @@ export const dynamic = "force-dynamic";
 export default async function WritePage({ searchParams }: WritePageProps) {
   const session = await getSession();
   if (!session) redirect("/sign-in");
-  if (!memoryStore.getProfile(session.user.id)) redirect("/onboarding");
+  const store = getDomainStore();
+  if (!(await store.getProfile(session.user.id))) redirect("/onboarding");
   const params = await searchParams;
-  const books = memoryStore.listBooks();
+  const books = await store.listBooks();
   const book = books.find((candidate) => candidate.slug === params.book || candidate.id === params.book);
 
   if (!book) {

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { RoastCard } from "@/components/RoastCard";
 import { demoBooks } from "@/src/data/demo";
-import { memoryStore } from "@/src/domain/store";
+import { getDomainStore } from "@/src/domain/repository";
 
 type BookPageProps = { params: Promise<{ slug: string }> };
 
@@ -15,16 +15,16 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: BookPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const book = memoryStore.getBookBySlug(slug);
+  const book = await getDomainStore().getBookBySlug(slug);
   return book ? { title: `${book.title} — Badreads`, description: book.description } : {};
 }
 
 export default async function BookPage({ params }: BookPageProps) {
   const { slug } = await params;
-  const book = memoryStore.getBookBySlug(slug);
+  const store = getDomainStore();
+  const book = await store.getBookBySlug(slug);
   if (!book) notFound();
-  const summary = memoryStore.getBookSummary(book.id);
-  const roasts = memoryStore.getRoastsForBook(book.id);
+  const [summary, roasts] = await Promise.all([store.getBookSummary(book.id), store.getRoastsForBook(book.id)]);
 
   return (
     <main>

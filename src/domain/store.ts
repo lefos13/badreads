@@ -16,7 +16,7 @@ import type {
 } from "./types";
 import { demoBooks, demoProfiles, demoRoasts } from "@/src/data/demo";
 
-type RoastInput = {
+export type RoastInput = {
   userId: string;
   bookId: string;
   hook: string;

@@ -1,6 +1,6 @@
 import { ModerationQueue } from "@/components/ModerationQueue";
 import { ReportQueue } from "@/components/ReportQueue";
-import { memoryStore } from "@/src/domain/store";
+import { getDomainStore } from "@/src/domain/repository";
 import { hasModeratorAccess } from "@/src/lib/authorization";
 
 export const dynamic = "force-dynamic";
@@ -9,8 +9,10 @@ export default async function ModerationPage() {
   if (!(await hasModeratorAccess())) {
     return <main className="page-width section"><div className="empty-state"><h1>Moderator access required.</h1><p>This queue is private to the founder and approved moderators.</p></div></main>;
   }
-  const pending = memoryStore.listRoasts().filter((roast) => roast.status === "PENDING_REVIEW");
-  const reports = memoryStore.listReports().filter((report) => report.status === "OPEN");
+  const store = getDomainStore();
+  const [allRoasts, allReports] = await Promise.all([store.listRoasts(), store.listReports()]);
+  const pending = allRoasts.filter((roast) => roast.status === "PENDING_REVIEW");
+  const reports = allReports.filter((report) => report.status === "OPEN");
 
   return (
     <main className="page-width section">

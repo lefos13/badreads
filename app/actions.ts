@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { FLAW_TAGS, profileDraftSchema, validateRoastDraft, type ReactionKind } from "@/src/domain/core";
-import { memoryStore } from "@/src/domain/store";
+import { getDomainStore } from "@/src/domain/repository";
 import { getSession } from "@/src/lib/session";
 import { hasModeratorAccess } from "@/src/lib/authorization";
 import { consumeRateLimit } from "@/src/lib/rate-limit";
@@ -55,12 +55,14 @@ export async function submitRoastAction(_previous: RoastActionState, formData: F
   const validation = validateRoastDraft(input);
   if (!validation.success) return { ok: false, message: validation.errors.join(" ") };
 
-  const result = memoryStore.createRoast(input);
+  const store = getDomainStore();
+  const result = await store.createRoast(input);
   if (!result.ok) return { ok: false, message: result.message };
 
   revalidatePath("/");
   revalidatePath("/feed");
-  revalidatePath(`/books/${memoryStore.listBooks().find((book) => book.id === input.bookId)?.slug ?? ""}`);
+  const book = (await store.listBooks()).find((candidate) => candidate.id === input.bookId);
+  revalidatePath(`/books/${book?.slug ?? ""}`);
   return {
     ok: true,
     roastId: result.data.id,
@@ -75,7 +77,7 @@ export async function setReactionAction(input: { roastId: string; kind: Reaction
   if (!userId) return { ok: false as const, code: "UNAUTHENTICATED" as const, message: "Sign in before reacting." };
   const rateLimit = await consumeRateLimit(`reaction:${userId}`, 120, 60 * 1000);
   if (!rateLimit.allowed) return { ok: false as const, code: "RATE_LIMITED" as const, message: "You are reacting too quickly. Try again in a minute." };
-  const result = memoryStore.setReaction({ ...parsed.data, userId });
+  const result = await getDomainStore().setReaction({ ...parsed.data, userId });
   if (!result.ok) return result;
   revalidatePath("/feed");
   revalidatePath(`/roasts/${parsed.data.roastId}`);
@@ -89,7 +91,7 @@ export async function setBookmarkAction(input: { roastId: string; active: boolea
   if (!userId) return { ok: false as const, code: "UNAUTHENTICATED" as const, message: "Sign in before saving a roast." };
   const rateLimit = await consumeRateLimit(`bookmark:${userId}`, 60, 60 * 60 * 1000);
   if (!rateLimit.allowed) return { ok: false as const, code: "RATE_LIMITED" as const, message: "You have reached the hourly save limit." };
-  const result = memoryStore.setBookmark({ ...parsed.data, userId });
+  const result = await getDomainStore().setBookmark({ ...parsed.data, userId });
   if (!result.ok) return result;
   revalidatePath("/feed");
   return result;
@@ -100,7 +102,7 @@ export async function setFollowAction(input: { followeeId: string; active: boole
   if (!parsed.success) return { ok: false as const, code: "VALIDATION_ERROR" as const, message: "That follow request could not be understood." };
   const userId = await viewerId();
   if (!userId) return { ok: false as const, code: "UNAUTHENTICATED" as const, message: "Sign in before following a reviewer." };
-  return memoryStore.setFollow({ ...parsed.data, followerId: userId });
+  return getDomainStore().setFollow({ ...parsed.data, followerId: userId });
 }
 
 export async function reportRoastAction(input: { roastId: string; category: "PERSONAL_ATTACK" | "HATE" | "SPOILER" | "SPAM" | "COPYRIGHT" | "OTHER"; note?: string }) {
@@ -110,7 +112,7 @@ export async function reportRoastAction(input: { roastId: string; category: "PER
   if (!userId) return { ok: false as const, code: "UNAUTHENTICATED" as const, message: "Sign in before reporting a roast." };
   const rateLimit = await consumeRateLimit(`report:${userId}`, 10, 60 * 60 * 1000);
   if (!rateLimit.allowed) return { ok: false as const, code: "RATE_LIMITED" as const, message: "You have reached the hourly report limit." };
-  const result = memoryStore.reportRoast({ ...parsed.data, reporterId: userId });
+  const result = await getDomainStore().reportRoast({ ...parsed.data, reporterId: userId });
   if (!result.ok) return result;
   revalidatePath("/feed");
   revalidatePath(`/roasts/${parsed.data.roastId}`);
@@ -123,7 +125,7 @@ export async function moderateRoastAction(input: { roastId: string; decision: "A
   if (!(await hasModeratorAccess())) return { ok: false as const, code: "FORBIDDEN" as const, message: "Moderator access is required." };
   const userId = await viewerId();
   if (!userId) return { ok: false as const, code: "UNAUTHENTICATED" as const, message: "Sign in before moderating." };
-  const result = memoryStore.moderateRoast({ ...parsed.data, moderatorId: userId });
+  const result = await getDomainStore().moderateRoast({ ...parsed.data, moderatorId: userId });
   if (!result.ok) return result;
   revalidatePath("/feed");
   revalidatePath("/moderation");
@@ -136,7 +138,7 @@ export async function resolveReportAction(input: { reportId: string; status: "UP
   if (!(await hasModeratorAccess())) return { ok: false as const, code: "FORBIDDEN" as const, message: "Moderator access is required." };
   const userId = await viewerId();
   if (!userId) return { ok: false as const, code: "UNAUTHENTICATED" as const, message: "Sign in before moderating." };
-  const result = memoryStore.resolveReport({ ...parsed.data, moderatorId: userId });
+  const result = await getDomainStore().resolveReport({ ...parsed.data, moderatorId: userId });
   if (!result.ok) return result;
   revalidatePath("/moderation");
   revalidatePath("/feed");
@@ -160,7 +162,7 @@ export async function createProfileAction(_previous: ProfileActionState, formDat
   });
   if (!parsed.success) return { ok: false, message: parsed.error.issues.map((issue) => issue.message).join(" ") };
 
-  const result = memoryStore.createProfile({
+  const result = await getDomainStore().createProfile({
     userId,
     handle: parsed.data.handle,
     displayName: parsed.data.displayName,
@@ -180,7 +182,7 @@ export type AccountActionState = {
 export async function deleteAccountAction(_previous: AccountActionState): Promise<AccountActionState> {
   const userId = await viewerId();
   if (!userId) return { ok: false, message: "Sign in before deleting your account." };
-  const result = memoryStore.deleteProfile(userId);
+  const result = await getDomainStore().deleteProfile(userId);
   if (!result.ok) return { ok: false, message: result.message };
   revalidatePath("/");
   revalidatePath("/feed");

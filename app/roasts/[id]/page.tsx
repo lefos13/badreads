@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BADNESS_LABELS } from "@/src/domain/core";
-import { memoryStore } from "@/src/domain/store";
+import { getDomainStore } from "@/src/domain/repository";
 import { ReactionButtons } from "@/components/ReactionButtons";
 import { ReportForm } from "@/components/ReportForm";
 import { hasModeratorAccess } from "@/src/lib/authorization";
@@ -14,18 +14,19 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: RoastPageProps): Promise<Metadata> {
   const { id } = await params;
-  const roast = memoryStore.getRoast(id);
+  const roast = await getDomainStore().getRoast(id);
   return roast && roast.status === "PUBLISHED" ? { title: `${roast.hook} — Badreads`, description: roast.body } : {};
 }
 
 export default async function RoastPage({ params }: RoastPageProps) {
   const { id } = await params;
-  const roast = memoryStore.getRoast(id);
+  const store = getDomainStore();
+  const roast = await store.getRoast(id);
   if (!roast) notFound();
   const session = await getSession();
-  const viewerProfile = session ? memoryStore.getProfile(session.user.id) : undefined;
+  const viewerProfile = session ? await store.getProfile(session.user.id) : undefined;
   if (roast.status !== "PUBLISHED" && viewerProfile?.id !== roast.authorId && !(await hasModeratorAccess())) notFound();
-  const book = memoryStore.getBook(roast.bookId);
+  const book = await store.getBook(roast.bookId);
   if (!book) notFound();
 
   return (

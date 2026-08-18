@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { FollowButton } from "@/components/FollowButton";
 import { RoastCard } from "@/components/RoastCard";
 import { demoProfiles } from "@/src/data/demo";
-import { memoryStore } from "@/src/domain/store";
+import { getDomainStore } from "@/src/domain/repository";
 
 type ProfilePageProps = { params: Promise<{ handle: string }> };
 
@@ -15,15 +15,18 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: ProfilePageProps): Promise<Metadata> {
   const { handle } = await params;
-  const profile = memoryStore.getProfileByHandle(handle);
+  const profile = await getDomainStore().getProfileByHandle(handle);
   return profile ? { title: `@${profile.handle} — Badreads`, description: profile.bio } : {};
 }
 
 export default async function ProfilePage({ params }: ProfilePageProps) {
   const { handle } = await params;
-  const profile = memoryStore.getProfileByHandle(handle);
+  const store = getDomainStore();
+  const profile = await store.getProfileByHandle(handle);
   if (!profile) notFound();
-  const roasts = memoryStore.listRoasts().filter((roast) => roast.authorId === profile.id && roast.status === "PUBLISHED");
+  const [allRoasts, books] = await Promise.all([store.listRoasts(), store.listBooks()]);
+  const roasts = allRoasts.filter((roast) => roast.authorId === profile.id && roast.status === "PUBLISHED");
+  const booksById = new Map(books.map((book) => [book.id, book] as const));
 
   return (
     <main className="page-width section">
@@ -40,7 +43,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         <div className="section-heading"><h2>{roasts.length} public verdicts</h2><p>One score per book. No drive-by insults without evidence.</p></div>
         <div className="roast-list">
           {roasts.length ? roasts.map((roast) => {
-            const book = memoryStore.getBook(roast.bookId);
+            const book = booksById.get(roast.bookId);
             return book ? <RoastCard bookSlug={book.slug} bookTitle={book.title} key={roast.id} roast={roast} /> : null;
           }) : <div className="empty-state">This reviewer has not published a verdict yet.</div>}
         </div>

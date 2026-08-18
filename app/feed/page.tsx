@@ -1,6 +1,6 @@
 import { BookCard } from "@/components/BookCard";
 import { RoastCard } from "@/components/RoastCard";
-import { memoryStore } from "@/src/domain/store";
+import { getDomainStore } from "@/src/domain/repository";
 import { getSession } from "@/src/lib/session";
 
 export const metadata = {
@@ -12,8 +12,10 @@ export const dynamic = "force-dynamic";
 
 export default async function FeedPage() {
   const session = await getSession();
-  const roasts = memoryStore.listFeed(session?.user?.id);
-  const books = memoryStore.listBooks().sort((a, b) => (memoryStore.getBookSummary(b.id).average ?? 0) - (memoryStore.getBookSummary(a.id).average ?? 0));
+  const store = getDomainStore();
+  const [roasts, unsortedBooks] = await Promise.all([store.listFeed(session?.user?.id), store.listBooks()]);
+  const summaries = new Map(await Promise.all(unsortedBooks.map(async (book) => [book.id, await store.getBookSummary(book.id)] as const)));
+  const books = unsortedBooks.sort((a, b) => (summaries.get(b.id)?.average ?? 0) - (summaries.get(a.id)?.average ?? 0));
 
   return (
     <main className="page-width section">
@@ -34,7 +36,7 @@ export default async function FeedPage() {
         <aside>
           <span className="eyebrow mono">Worst right now</span>
           <div className="roast-list roast-book-list">
-            {books.slice(0, 3).map((book) => <BookCard key={book.id} book={book} average={memoryStore.getBookSummary(book.id).average} roastCount={memoryStore.getBookSummary(book.id).count} />)}
+            {books.slice(0, 3).map((book) => <BookCard key={book.id} book={book} average={summaries.get(book.id)?.average ?? null} roastCount={summaries.get(book.id)?.count ?? 0} />)}
           </div>
         </aside>
       </div>

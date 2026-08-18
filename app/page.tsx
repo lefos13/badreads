@@ -1,19 +1,20 @@
 import Link from "next/link";
 import { BookCard } from "@/components/BookCard";
 import { RoastCard } from "@/components/RoastCard";
-import { memoryStore } from "@/src/domain/store";
+import { getDomainStore } from "@/src/domain/repository";
 
 /*
- * Public discovery reads through the same domain store as mutations. This is
- * deliberately dynamic for the demo runtime so a newly published roast is
- * visible immediately; a Postgres repository can keep the page indexable.
+ * Public discovery reads through the same async domain store as mutations.
+ * Demo mode resolves to the seeded memory adapter while production resolves
+ * to Neon, so newly published content remains visible without page rewrites.
  */
 
 export const dynamic = "force-dynamic";
 
-export default function HomePage() {
-  const books = memoryStore.listBooks();
-  const feed = memoryStore.listFeed();
+export default async function HomePage() {
+  const store = getDomainStore();
+  const [books, feed] = await Promise.all([store.listBooks(), store.listFeed()]);
+  const summaries = new Map(await Promise.all(books.map(async (book) => [book.id, await store.getBookSummary(book.id)] as const)));
 
   return (
     <main>
@@ -45,7 +46,7 @@ export default function HomePage() {
         </div>
         <div className="book-grid">
           {books.map((book) => {
-            const summary = memoryStore.getBookSummary(book.id);
+            const summary = summaries.get(book.id) ?? { average: null, count: 0, worstCount: 0 };
             return <BookCard key={book.id} book={book} average={summary.average} roastCount={summary.count} />;
           })}
         </div>

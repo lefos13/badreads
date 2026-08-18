@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { OnboardingForm } from "@/components/OnboardingForm";
-import { memoryStore } from "@/src/domain/store";
+import { getDomainStore } from "@/src/domain/repository";
 import { getSession } from "@/src/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function OnboardingPage() {
   const session = await getSession();
   if (!session) redirect("/sign-in");
-  if (memoryStore.getProfile(session.user.id)) redirect("/write");
+  if (await getDomainStore().getProfile(session.user.id)) redirect("/write");
 
   return (
     <main className="page-width form-shell">

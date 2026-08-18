@@ -1,10 +1,10 @@
 import { getSession } from "@/src/lib/session";
-import { memoryStore } from "@/src/domain/store";
+import { getDomainStore } from "@/src/domain/repository";
 
 export async function GET() {
   const session = await getSession();
   if (!session) return Response.json({ ok: false, error: { code: "UNAUTHENTICATED", message: "Sign in first." } }, { status: 401 });
-  const result = memoryStore.exportProfile(session.user.id);
+  const result = await getDomainStore().exportProfile(session.user.id);
   if (!result.ok) return Response.json({ ok: false, error: { code: result.code, message: result.message } }, { status: 404 });
 
   return Response.json({ ok: true, data: result.data }, {

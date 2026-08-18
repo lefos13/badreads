@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { resolveCatalogWork } from "@/src/catalog/service";
-import { memoryStore } from "@/src/domain/store";
+import { getDomainStore } from "@/src/domain/repository";
 
 type CatalogChoosePageProps = { searchParams: Promise<{ providerWorkId?: string }> };
 
@@ -17,7 +17,7 @@ export default async function CatalogChoosePage({ searchParams }: CatalogChooseP
   const result = await resolveCatalogWork(providerWorkId.toUpperCase());
   if (!result) notFound();
 
-  const book = memoryStore.upsertBook({
+  const book = await getDomainStore().upsertBook({
     id: `book-${result.providerWorkId.toLowerCase()}`,
     slug: "slug" in result && typeof result.slug === "string" ? result.slug : slugify(result.title, result.providerWorkId),
     title: result.title,
