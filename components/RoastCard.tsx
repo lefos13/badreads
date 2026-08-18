@@ -5,9 +5,10 @@ import type { Roast } from "@/src/domain/types";
 type RoastCardProps = {
   roast: Roast;
   bookTitle: string;
+  bookSlug?: string;
 };
 
-export function RoastCard({ roast, bookTitle }: RoastCardProps) {
+export function RoastCard({ roast, bookTitle, bookSlug }: RoastCardProps) {
   return (
     <article className="roast-card">
       <div className="roast-topline">
@@ -19,7 +20,7 @@ export function RoastCard({ roast, bookTitle }: RoastCardProps) {
         <p>{roast.body}</p>
       </Link>
       <div className="roast-book">
-        <Link href={`/books/${bookTitle.toLowerCase().replaceAll(" ", "-")}`}>{bookTitle}</Link>
+        <Link href={bookSlug ? `/books/${bookSlug}` : "/search"}>{bookTitle}</Link>
         <span aria-hidden="true"> · </span>
         <span className="badness-stars" title={BADNESS_LABELS[roast.rating]}>{"★".repeat(roast.rating)}{"☆".repeat(5 - roast.rating)}</span>
         <span className="mono"> {BADNESS_LABELS[roast.rating]}</span>

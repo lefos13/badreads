@@ -51,7 +51,7 @@ export default function HomePage() {
           <div className="roast-list">
             {feed.slice(0, 3).map((roast) => {
               const book = demoBooks.find((candidate) => candidate.id === roast.bookId);
-              return book ? <RoastCard key={roast.id} roast={roast} bookTitle={book.title} /> : null;
+              return book ? <RoastCard key={roast.id} roast={roast} bookSlug={book.slug} bookTitle={book.title} /> : null;
             })}
           </div>
           <aside className="side-note">
