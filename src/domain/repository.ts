@@ -127,6 +127,7 @@ function createMemoryDomainStore(): DomainStore {
     setBookmark: async (...args) => store.setBookmark(...args),
     setFollow: async (...args) => store.setFollow(...args),
     setReaction: async (...args) => store.setReaction(...args),
+    searchBooks: async (...args) => store.searchBooks(...args),
     upsertBook: async (...args) => store.upsertBook(...args),
     updateRoast: async (...args) => store.updateRoast(...args),
   };
@@ -404,6 +405,24 @@ function createPostgresStore(database: Database): DomainStore {
     const rows = await database.select().from(schema.bookWorks).orderBy(schema.bookWorks.title);
     return rows.map(mapBook);
   }
+  async function searchBooks(query: string, limit = 20) {
+    const clean = query.trim();
+    if (!clean) return [];
+    const pattern = `%${clean}%`;
+    const rows = await database
+      .select()
+      .from(schema.bookWorks)
+      .where(
+        or(
+          ilike(schema.bookWorks.title, pattern),
+          ilike(schema.bookWorks.slug, pattern),
+          ilike(schema.bookWorks.providerWorkId, pattern),
+          sql`${schema.bookWorks.authors}::text ILIKE ${pattern}`,
+        ),
+      )
+      .limit(limit);
+    return rows.map(mapBook);
+  }
 
   async function getBookSummary(bookId: string) {
     if (!UUID_PATTERN.test(bookId)) return { average: null, count: 0, worstCount: 0 };
@@ -496,6 +515,7 @@ function createPostgresStore(database: Database): DomainStore {
     setFollow,
     setReaction,
     upsertBook,
+    searchBooks,
     updateRoast,
   } as DomainStore;
 }

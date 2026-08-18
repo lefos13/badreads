@@ -1,0 +1,1390 @@
+[
+  {
+    "providerWorkId": "OL14933414W",
+    "title": "The Da Vinci Code",
+    "authors": [
+      "Dan Brown"
+    ],
+    "firstPublished": 2003,
+    "description": "A symbologist unravels a conspiracy in Paris museums involving secret societies, anagrams, and breathless five-page cliffhangers.",
+    "coverTone": "coral",
+    "isbn": "9780385504201"
+  },
+  {
+    "providerWorkId": "OL16543085W",
+    "title": "Fifty Shades of Grey",
+    "authors": [
+      "E.L. James"
+    ],
+    "firstPublished": 2011,
+    "description": "A college graduate enters an intense relationship with a billionaire whose inner goddess and contracts defy editorial belief.",
+    "coverTone": "ink",
+    "isbn": "9780345803481"
+  },
+  {
+    "providerWorkId": "OL58133W",
+    "title": "Twilight",
+    "authors": [
+      "Stephenie Meyer"
+    ],
+    "firstPublished": 2005,
+    "description": "A high schooler moves to rainy Washington and falls for a vegetarian vampire who sparkles in direct sunlight.",
+    "coverTone": "lavender",
+    "isbn": "9780316160179"
+  },
+  {
+    "providerWorkId": "OL28498877W",
+    "title": "Fourth Wing",
+    "authors": [
+      "Rebecca Yarros"
+    ],
+    "firstPublished": 2023,
+    "description": "A fragile scribe candidate enters a lethal dragon rider war college with signets, enemies-to-lovers tension, and parapets.",
+    "coverTone": "acid",
+    "isbn": "9781649374042"
+  },
+  {
+    "providerWorkId": "OL32014164W",
+    "title": "Iron Flame",
+    "authors": [
+      "Rebecca Yarros"
+    ],
+    "firstPublished": 2023,
+    "description": "The brutal second year at Basgiath War College escalates with ward stones, secrets, and pacing challenges.",
+    "coverTone": "coral",
+    "isbn": "9781649374172"
+  },
+  {
+    "providerWorkId": "OL17352528W",
+    "title": "A Court of Thorns and Roses",
+    "authors": [
+      "Sarah J. Maas"
+    ],
+    "firstPublished": 2015,
+    "description": "A human huntress is dragged across the wall into the fae realm of Prythian after killing a wolf in the woods.",
+    "coverTone": "coral",
+    "isbn": "9781619634442"
+  },
+  {
+    "providerWorkId": "OL17466816W",
+    "title": "A Court of Mist and Fury",
+    "authors": [
+      "Sarah J. Maas"
+    ],
+    "firstPublished": 2016,
+    "description": "Feyre navigates post-traumatic court politics, high lords, and the Night Court's starfall revels.",
+    "coverTone": "lavender",
+    "isbn": "9781619634466"
+  },
+  {
+    "providerWorkId": "OL16801931W",
+    "title": "Throne of Glass",
+    "authors": [
+      "Sarah J. Maas"
+    ],
+    "firstPublished": 2012,
+    "description": "An assassin summoned from salt mines enters a royal death tournament while eating sweets and flirting with guards.",
+    "coverTone": "acid",
+    "isbn": "9781599906959"
+  },
+  {
+    "providerWorkId": "OL20882772W",
+    "title": "Verity",
+    "authors": [
+      "Colleen Hoover"
+    ],
+    "firstPublished": 2018,
+    "description": "A struggling writer hired to finish an injured author's thriller series uncovers an unsettling, unfinished manuscript.",
+    "coverTone": "ink",
+    "isbn": "9781538724736"
+  },
+  {
+    "providerWorkId": "OL17852364W",
+    "title": "It Ends with Us",
+    "authors": [
+      "Colleen Hoover"
+    ],
+    "firstPublished": 2016,
+    "description": "A Boston florist grapples with romance, family history, and difficult choices in a dramatic contemporary romance.",
+    "coverTone": "coral",
+    "isbn": "9781501110368"
+  },
+  {
+    "providerWorkId": "OL27909384W",
+    "title": "It Starts with Us",
+    "authors": [
+      "Colleen Hoover"
+    ],
+    "firstPublished": 2022,
+    "description": "The sequel following Lily and Atlas as they attempt to start over amid lingering past ties.",
+    "coverTone": "lavender",
+    "isbn": "9781668001226"
+  },
+  {
+    "providerWorkId": "OL20142498W",
+    "title": "The Silent Patient",
+    "authors": [
+      "Alex Michaelides"
+    ],
+    "firstPublished": 2019,
+    "description": "A psychotherapist becomes obsessed with uncovering why a renowned painter shot her husband and never spoke another word.",
+    "coverTone": "ink",
+    "isbn": "9781250301696"
+  },
+  {
+    "providerWorkId": "OL24190875W",
+    "title": "The Maidens",
+    "authors": [
+      "Alex Michaelides"
+    ],
+    "firstPublished": 2021,
+    "description": "A therapist suspects a charismatic Cambridge Greek tragedy professor of leading a secretive student cult.",
+    "coverTone": "lavender",
+    "isbn": "9781250304451"
+  },
+  {
+    "providerWorkId": "OL19656858W",
+    "title": "The Woman in the Window",
+    "authors": [
+      "A.J. Finn"
+    ],
+    "firstPublished": 2018,
+    "description": "An agoraphobic child psychologist in New York spends her days drinking wine and watching neighbors until she witnesses a crime.",
+    "coverTone": "coral",
+    "isbn": "9780062678416"
+  },
+  {
+    "providerWorkId": "OL17081702W",
+    "title": "The Girl on the Train",
+    "authors": [
+      "Paula Hawkins"
+    ],
+    "firstPublished": 2015,
+    "description": "A daily commuter invents stories about the couples she watches through the window until one of them disappears.",
+    "coverTone": "ink",
+    "isbn": "9781594633669"
+  },
+  {
+    "providerWorkId": "OL16560940W",
+    "title": "Gone Girl",
+    "authors": [
+      "Gillian Flynn"
+    ],
+    "firstPublished": 2012,
+    "description": "A marriage unravels under the glare of national media after a wife goes missing on her fifth wedding anniversary.",
+    "coverTone": "acid",
+    "isbn": "9780307588364"
+  },
+  {
+    "providerWorkId": "OL19694462W",
+    "title": "The Seven Husbands of Evelyn Hugo",
+    "authors": [
+      "Taylor Jenkins Reid"
+    ],
+    "firstPublished": 2017,
+    "description": "An aging Hollywood icon chooses an unknown magazine reporter to tell the truth about her glamorous, scandalous life.",
+    "coverTone": "acid",
+    "isbn": "9781501161933"
+  },
+  {
+    "providerWorkId": "OL20142485W",
+    "title": "Daisy Jones & The Six",
+    "authors": [
+      "Taylor Jenkins Reid"
+    ],
+    "firstPublished": 2019,
+    "description": "An oral history capturing the meteoric rise and backstage implosion of a legendary 1970s rock band.",
+    "coverTone": "coral",
+    "isbn": "9781524798628"
+  },
+  {
+    "providerWorkId": "OL19927702W",
+    "title": "Where the Crawdads Sing",
+    "authors": [
+      "Delia Owens"
+    ],
+    "firstPublished": 2018,
+    "description": "The Marsh Girl comes of age in isolation in coastal North Carolina and becomes a suspect in a local murder trial.",
+    "coverTone": "acid",
+    "isbn": "9780735219090"
+  },
+  {
+    "providerWorkId": "OL21639893W",
+    "title": "The Midnight Library",
+    "authors": [
+      "Matt Haig"
+    ],
+    "firstPublished": 2020,
+    "description": "Between life and death sits a library where a woman can try out all the infinite lives she could have lived.",
+    "coverTone": "lavender",
+    "isbn": "9780525559474"
+  },
+  {
+    "providerWorkId": "OL27192661W",
+    "title": "Tomorrow, and Tomorrow, and Tomorrow",
+    "authors": [
+      "Gabrielle Zevin"
+    ],
+    "firstPublished": 2022,
+    "description": "Two childhood friends partner to create video games, traversing thirty years of creative triumphs, grief, and ego.",
+    "coverTone": "coral",
+    "isbn": "9780593321201"
+  },
+  {
+    "providerWorkId": "OL28498880W",
+    "title": "Yellowface",
+    "authors": [
+      "R.F. Kuang"
+    ],
+    "firstPublished": 2023,
+    "description": "A struggling writer steals her deceased peer's unfinished manuscript about Chinese laborers and publishes it as her own.",
+    "coverTone": "acid",
+    "isbn": "9780063250833"
+  },
+  {
+    "providerWorkId": "OL27192660W",
+    "title": "Babel",
+    "authors": [
+      "R.F. Kuang"
+    ],
+    "firstPublished": 2022,
+    "description": "An Oxford translation institute uses silver-working and language pairs to power British imperial dominance.",
+    "coverTone": "ink",
+    "isbn": "9780063021426"
+  },
+  {
+    "providerWorkId": "OL19927700W",
+    "title": "The Poppy War",
+    "authors": [
+      "R.F. Kuang"
+    ],
+    "firstPublished": 2018,
+    "description": "A war orphan tests into an elite military academy and unlocks shamanic fire powers with devastating costs.",
+    "coverTone": "coral",
+    "isbn": "9780062662569"
+  },
+  {
+    "providerWorkId": "OL19927705W",
+    "title": "Normal People",
+    "authors": [
+      "Sally Rooney"
+    ],
+    "firstPublished": 2018,
+    "description": "Two Irish teenagers from different social classes navigate miscommunication and vulnerability across university years.",
+    "coverTone": "lavender",
+    "isbn": "9781984822178"
+  },
+  {
+    "providerWorkId": "OL19656850W",
+    "title": "Conversations with Friends",
+    "authors": [
+      "Sally Rooney"
+    ],
+    "firstPublished": 2017,
+    "description": "Two Dublin college students become entangled with an older married couple in a web of spoken poetry and affairs.",
+    "coverTone": "coral",
+    "isbn": "9780525509080"
+  },
+  {
+    "providerWorkId": "OL17352520W",
+    "title": "A Little Life",
+    "authors": [
+      "Hanya Yanagihara"
+    ],
+    "firstPublished": 2015,
+    "description": "Four college classmates move to New York, where their friendship is tested by trauma, success, and relentless agony.",
+    "coverTone": "ink",
+    "isbn": "9780385539258"
+  },
+  {
+    "providerWorkId": "OL16801930W",
+    "title": "The Goldfinch",
+    "authors": [
+      "Donna Tartt"
+    ],
+    "firstPublished": 2013,
+    "description": "A young boy survives a museum bombing and carries away a tiny Dutch masterpiece that anchors his troubled youth.",
+    "coverTone": "lavender",
+    "isbn": "9780316055437"
+  },
+  {
+    "providerWorkId": "OL25794W",
+    "title": "The Secret History",
+    "authors": [
+      "Donna Tartt"
+    ],
+    "firstPublished": 1992,
+    "description": "A close-knit circle of classics students at a Vermont college cross moral boundaries with ancient Greek rites.",
+    "coverTone": "ink",
+    "isbn": "9780679410324"
+  },
+  {
+    "providerWorkId": "OL19927710W",
+    "title": "My Year of Rest and Relaxation",
+    "authors": [
+      "Ottessa Moshfegh"
+    ],
+    "firstPublished": 2018,
+    "description": "A young Upper East Side woman embarks on a chemically induced hibernation project to reset her life in year 2000.",
+    "coverTone": "acid",
+    "isbn": "9780525522119"
+  },
+  {
+    "providerWorkId": "OL15949216W",
+    "title": "Ready Player One",
+    "authors": [
+      "Ernest Cline"
+    ],
+    "firstPublished": 2011,
+    "description": "In a dystopian future, a teenager hunts for 1980s pop culture easter eggs hidden in a vast virtual reality universe.",
+    "coverTone": "acid",
+    "isbn": "9780307887436"
+  },
+  {
+    "providerWorkId": "OL21639890W",
+    "title": "Ready Player Two",
+    "authors": [
+      "Ernest Cline"
+    ],
+    "firstPublished": 2020,
+    "description": "The OASIS founder leaves behind a brain-computer interface and another lore-heavy scavenger hunt.",
+    "coverTone": "coral",
+    "isbn": "9781524761332"
+  },
+  {
+    "providerWorkId": "OL16782298W",
+    "title": "The Martian",
+    "authors": [
+      "Andy Weir"
+    ],
+    "firstPublished": 2011,
+    "description": "An astronaut stranded on Mars relies on botany, chemistry, and relentless math to survive until rescue.",
+    "coverTone": "coral",
+    "isbn": "9780804139021"
+  },
+  {
+    "providerWorkId": "OL24190880W",
+    "title": "Project Hail Mary",
+    "authors": [
+      "Andy Weir"
+    ],
+    "firstPublished": 2021,
+    "description": "A lone schoolteacher-turned-astronaut wakes from amnesia on an interstellar voyage to save Earth from sun-eating microbes.",
+    "coverTone": "acid",
+    "isbn": "9780593135204"
+  },
+  {
+    "providerWorkId": "OL20142490W",
+    "title": "Red, White & Royal Blue",
+    "authors": [
+      "Casey McQuiston"
+    ],
+    "firstPublished": 2019,
+    "description": "The First Son of the United States and the Prince of Wales stage a public truce that turns into an international romance.",
+    "coverTone": "coral",
+    "isbn": "9781250316776"
+  },
+  {
+    "providerWorkId": "OL27192650W",
+    "title": "Book Lovers",
+    "authors": [
+      "Emily Henry"
+    ],
+    "firstPublished": 2022,
+    "description": "A cutthroat literary agent and an aloof book editor repeatedly cross paths in a tiny North Carolina town.",
+    "coverTone": "lavender",
+    "isbn": "9780593334836"
+  },
+  {
+    "providerWorkId": "OL21639885W",
+    "title": "Beach Read",
+    "authors": [
+      "Emily Henry"
+    ],
+    "firstPublished": 2020,
+    "description": "Two rival authors with writer's block swap genres for the summer in neighboring lake houses.",
+    "coverTone": "coral",
+    "isbn": "9781984806734"
+  },
+  {
+    "providerWorkId": "OL24190890W",
+    "title": "The Love Hypothesis",
+    "authors": [
+      "Ali Hazelwood"
+    ],
+    "firstPublished": 2021,
+    "description": "A biology Ph.D. candidate fakes a relationship with a notoriously tyrannical young professor to convince her best friend.",
+    "coverTone": "acid",
+    "isbn": "9780593336823"
+  },
+  {
+    "providerWorkId": "OL27192665W",
+    "title": "Lessons in Chemistry",
+    "authors": [
+      "Bonnie Garmus"
+    ],
+    "firstPublished": 2022,
+    "description": "A chemist in the 1960s becomes the reluctant star of a beloved afternoon cooking show that teaches women empowerment.",
+    "coverTone": "coral",
+    "isbn": "9780385547344"
+  },
+  {
+    "providerWorkId": "OL21639880W",
+    "title": "The Guest List",
+    "authors": [
+      "Lucy Foley"
+    ],
+    "firstPublished": 2020,
+    "description": "Celebrities, groomsmen, and hidden resentments collide during a stormy celebrity wedding on a remote Irish island.",
+    "coverTone": "ink",
+    "isbn": "9780062868824"
+  },
+  {
+    "providerWorkId": "OL27192675W",
+    "title": "The Housemaid",
+    "authors": [
+      "Freida McFadden"
+    ],
+    "firstPublished": 2022,
+    "description": "A housekeeper with a criminal record takes a job in an affluent household with locked attic doors and twisted secrets.",
+    "coverTone": "ink",
+    "isbn": "9781538742570"
+  },
+  {
+    "providerWorkId": "OL45804W",
+    "title": "The Alchemist",
+    "authors": [
+      "Paulo Coelho"
+    ],
+    "firstPublished": 1988,
+    "description": "An Andalusian shepherd boy travels to Egypt in search of treasure and learns to listen to the soul of the world.",
+    "coverTone": "acid",
+    "isbn": "9780062315007"
+  },
+  {
+    "providerWorkId": "OL19927715W",
+    "title": "Atomic Habits",
+    "authors": [
+      "James Clear"
+    ],
+    "firstPublished": 2018,
+    "description": "A practical framework for building good routines and breaking bad ones through tiny, compound behavioral shifts.",
+    "coverTone": "acid",
+    "isbn": "9780735211292"
+  },
+  {
+    "providerWorkId": "OL17852370W",
+    "title": "The Subtle Art of Not Giving a F*ck",
+    "authors": [
+      "Mark Manson"
+    ],
+    "firstPublished": 2016,
+    "description": "A contrarian self-help guide preaching radical acceptance of life's struggles over toxic positive thinking.",
+    "coverTone": "coral",
+    "isbn": "9780062457714"
+  },
+  {
+    "providerWorkId": "OL8178877W",
+    "title": "The Secret",
+    "authors": [
+      "Rhonda Byrne"
+    ],
+    "firstPublished": 2006,
+    "description": "A manifestation treatise claiming the universe responds to positive frequencies and visualization boards.",
+    "coverTone": "lavender",
+    "isbn": "9781582701707"
+  },
+  {
+    "providerWorkId": "OL34225W",
+    "title": "Rich Dad Poor Dad",
+    "authors": [
+      "Robert T. Kiyosaki"
+    ],
+    "firstPublished": 1997,
+    "description": "Parables comparing the financial mindsets of two fathers regarding cash flow, real estate, and financial literacy.",
+    "coverTone": "acid",
+    "isbn": "9781612680194"
+  },
+  {
+    "providerWorkId": "OL8178880W",
+    "title": "The 4-Hour Workweek",
+    "authors": [
+      "Timothy Ferriss"
+    ],
+    "firstPublished": 2007,
+    "description": "Blueprint for outsourcing, geo-arbitrage, and building automated businesses to join the new rich.",
+    "coverTone": "coral",
+    "isbn": "9780307465351"
+  },
+  {
+    "providerWorkId": "OL19927720W",
+    "title": "Girl, Wash Your Face",
+    "authors": [
+      "Rachel Hollis"
+    ],
+    "firstPublished": 2018,
+    "description": "A lifestyle blogger discusses personal insecurities, self-reliance, and faith-based hustle culture.",
+    "coverTone": "coral",
+    "isbn": "9781400201655"
+  },
+  {
+    "providerWorkId": "OL8178885W",
+    "title": "Eat, Pray, Love",
+    "authors": [
+      "Elizabeth Gilbert"
+    ],
+    "firstPublished": 2006,
+    "description": "A memoir of travel through Italy, India, and Indonesia following a difficult divorce.",
+    "coverTone": "lavender",
+    "isbn": "9780143038412"
+  },
+  {
+    "providerWorkId": "OL102927W",
+    "title": "Think and Grow Rich",
+    "authors": [
+      "Napoleon Hill"
+    ],
+    "firstPublished": 1937,
+    "description": "Early personal success philosophy distilling interviews with twentieth-century industrial barons into principles.",
+    "coverTone": "ink",
+    "isbn": "9781585424337"
+  },
+  {
+    "providerWorkId": "OL45810W",
+    "title": "Who Moved My Cheese?",
+    "authors": [
+      "Spencer Johnson"
+    ],
+    "firstPublished": 1998,
+    "description": "A brief corporate parable about mice navigating a maze to teach acceptance of organizational change.",
+    "coverTone": "acid",
+    "isbn": "9780399144462"
+  },
+  {
+    "providerWorkId": "OL16801940W",
+    "title": "Lean In",
+    "authors": [
+      "Sheryl Sandberg"
+    ],
+    "firstPublished": 2013,
+    "description": "A Silicon Valley executive examines female leadership, negotiation, and corporate advancement barriers.",
+    "coverTone": "coral",
+    "isbn": "9780385349949"
+  },
+  {
+    "providerWorkId": "OL17081705W",
+    "title": "Zero to One",
+    "authors": [
+      "Peter Thiel",
+      "Blake Masters"
+    ],
+    "firstPublished": 2014,
+    "description": "Essays on technological monopoly, venture capital, and building novel companies rather than copying formulas.",
+    "coverTone": "ink",
+    "isbn": "9780804139298"
+  },
+  {
+    "providerWorkId": "OL8178890W",
+    "title": "Outliers",
+    "authors": [
+      "Malcolm Gladwell"
+    ],
+    "firstPublished": 2008,
+    "description": "Case studies examining how timing, culture, family background, and 10,000 hours create exceptional success.",
+    "coverTone": "acid",
+    "isbn": "9780316017923"
+  },
+  {
+    "providerWorkId": "OL45815W",
+    "title": "The Tipping Point",
+    "authors": [
+      "Malcolm Gladwell"
+    ],
+    "firstPublished": 2000,
+    "description": "An inquiry into how small ideas, social trends, and behavioral epidemics cross tipping thresholds.",
+    "coverTone": "coral",
+    "isbn": "9780316316965"
+  },
+  {
+    "providerWorkId": "OL17852375W",
+    "title": "Grit",
+    "authors": [
+      "Angela Duckworth"
+    ],
+    "firstPublished": 2016,
+    "description": "Psychological research arguing that passion and long-term perseverance surpass innate talent in predicting success.",
+    "coverTone": "lavender",
+    "isbn": "9781501111105"
+  },
+  {
+    "providerWorkId": "OL15949225W",
+    "title": "Start with Why",
+    "authors": [
+      "Simon Sinek"
+    ],
+    "firstPublished": 2009,
+    "description": "A leadership framework focusing on purpose and core inspiration to rally teams and loyal customers.",
+    "coverTone": "coral",
+    "isbn": "9781591846444"
+  },
+  {
+    "providerWorkId": "OL45820W",
+    "title": "The 7 Habits of Highly Effective People",
+    "authors": [
+      "Stephen R. Covey"
+    ],
+    "firstPublished": 1989,
+    "description": "A principle-centered guide to personal efficacy, proactive thinking, and win-win interpersonal agreements.",
+    "coverTone": "ink",
+    "isbn": "9780743269513"
+  },
+  {
+    "providerWorkId": "OL102930W",
+    "title": "How to Win Friends and Influence People",
+    "authors": [
+      "Dale Carnegie"
+    ],
+    "firstPublished": 1936,
+    "description": "Classic foundational advice on social conversation, empathy, persuasion, and remembering people's names.",
+    "coverTone": "coral",
+    "isbn": "9780671027032"
+  },
+  {
+    "providerWorkId": "OL45825W",
+    "title": "The 48 Laws of Power",
+    "authors": [
+      "Robert Greene"
+    ],
+    "firstPublished": 1998,
+    "description": "Historical anecdotes illustrating machiavellian strategies for accumulating control, secrecy, and authority.",
+    "coverTone": "ink",
+    "isbn": "9780140280197"
+  },
+  {
+    "providerWorkId": "OL19927725W",
+    "title": "12 Rules for Life",
+    "authors": [
+      "Jordan B. Peterson"
+    ],
+    "firstPublished": 2018,
+    "description": "An antidote to chaos drawing on clinical psychology, mythology, and personal discipline.",
+    "coverTone": "lavender",
+    "isbn": "9780345816023"
+  },
+  {
+    "providerWorkId": "OL16560960W",
+    "title": "Sapiens: A Brief History of Humankind",
+    "authors": [
+      "Yuval Noah Harari"
+    ],
+    "firstPublished": 2011,
+    "description": "A sweeping overview of human evolution, cognitive revolutions, agriculture, and shared myths.",
+    "coverTone": "acid",
+    "isbn": "9780062316097"
+  },
+  {
+    "providerWorkId": "OL468436W",
+    "title": "The Great Gatsby",
+    "authors": [
+      "F. Scott Fitzgerald"
+    ],
+    "firstPublished": 1925,
+    "description": "Nick Carraway observes the opulent, tragic parties thrown by Jay Gatsby on Long Island's Gold Coast.",
+    "coverTone": "coral",
+    "isbn": "9780743273565"
+  },
+  {
+    "providerWorkId": "OL27513W",
+    "title": "The Catcher in the Rye",
+    "authors": [
+      "J.D. Salinger"
+    ],
+    "firstPublished": 1951,
+    "description": "Holden Caulfield wanders New York City for three days after getting expelled from prep school, calling out phonies.",
+    "coverTone": "acid",
+    "isbn": "9780316769488"
+  },
+  {
+    "providerWorkId": "OL45835W",
+    "title": "To Kill a Mockingbird",
+    "authors": [
+      "Harper Lee"
+    ],
+    "firstPublished": 1960,
+    "description": "Scout Finch grows up in 1930s Alabama while her father defends a Black man falsely accused of a crime.",
+    "coverTone": "lavender",
+    "isbn": "9780060935467"
+  },
+  {
+    "providerWorkId": "OL1168083W",
+    "title": "1984",
+    "authors": [
+      "George Orwell"
+    ],
+    "firstPublished": 1949,
+    "description": "Winston Smith attempts to resist total surveillance, doublethink, and the Party in totalitarian Oceania.",
+    "coverTone": "ink",
+    "isbn": "9780451524935"
+  },
+  {
+    "providerWorkId": "OL1168080W",
+    "title": "Animal Farm",
+    "authors": [
+      "George Orwell"
+    ],
+    "firstPublished": 1945,
+    "description": "Farm animals overthrow their human master only to find that some animals become more equal than others.",
+    "coverTone": "coral",
+    "isbn": "9780451526342"
+  },
+  {
+    "providerWorkId": "OL102935W",
+    "title": "Brave New World",
+    "authors": [
+      "Aldous Huxley"
+    ],
+    "firstPublished": 1932,
+    "description": "A genetically engineered society sacrifices art, family, and truth for soma and conditioned stability.",
+    "coverTone": "acid",
+    "isbn": "9780060850524"
+  },
+  {
+    "providerWorkId": "OL27515W",
+    "title": "Fahrenheit 451",
+    "authors": [
+      "Ray Bradbury"
+    ],
+    "firstPublished": 1953,
+    "description": "A fireman whose job is burning contraband books begins questioning censorship and parlor wall television.",
+    "coverTone": "coral",
+    "isbn": "9781451673319"
+  },
+  {
+    "providerWorkId": "OL27520W",
+    "title": "Lord of the Flies",
+    "authors": [
+      "William Golding"
+    ],
+    "firstPublished": 1954,
+    "description": "British schoolboys stranded on a deserted island descend into tribal brutality and ritual superstition.",
+    "coverTone": "ink",
+    "isbn": "9780399501487"
+  },
+  {
+    "providerWorkId": "OL45840W",
+    "title": "The Scarlet Letter",
+    "authors": [
+      "Nathaniel Hawthorne"
+    ],
+    "firstPublished": 1850,
+    "description": "Hester Prynne endures Puritan ostracism in Massachusetts while wearing the embroidered letter A.",
+    "coverTone": "coral",
+    "isbn": "9780142437261"
+  },
+  {
+    "providerWorkId": "OL45845W",
+    "title": "Wuthering Heights",
+    "authors": [
+      "Emily Brontë"
+    ],
+    "firstPublished": 1847,
+    "description": "The bitter, passionate feud between Heathcliff and Catherine Earnshaw haunts the Yorkshire moors across generations.",
+    "coverTone": "ink",
+    "isbn": "9780141439556"
+  },
+  {
+    "providerWorkId": "OL45850W",
+    "title": "Jane Eyre",
+    "authors": [
+      "Charlotte Brontë"
+    ],
+    "firstPublished": 1847,
+    "description": "An orphaned governess falls for the brooding master of Thornfield Hall, who conceals a secret in the attic.",
+    "coverTone": "lavender",
+    "isbn": "9780141441146"
+  },
+  {
+    "providerWorkId": "OL45855W",
+    "title": "Pride and Prejudice",
+    "authors": [
+      "Jane Austen"
+    ],
+    "firstPublished": 1813,
+    "description": "Elizabeth Bennet clashes with the proud Mr. Darcy over family expectations, rumors, and social rank.",
+    "coverTone": "lavender",
+    "isbn": "9780141439518"
+  },
+  {
+    "providerWorkId": "OL45870W",
+    "title": "Frankenstein",
+    "authors": [
+      "Mary Shelley"
+    ],
+    "firstPublished": 1818,
+    "description": "A Swiss scientist animates dead tissue and abandons his creation to a vengeful, solitary existence.",
+    "coverTone": "acid",
+    "isbn": "9780141439471"
+  },
+  {
+    "providerWorkId": "OL45875W",
+    "title": "Dracula",
+    "authors": [
+      "Bram Stoker"
+    ],
+    "firstPublished": 1897,
+    "description": "An ancient Transylvanian count buys property in London while a circle of friends fights to end his vampire reign.",
+    "coverTone": "ink",
+    "isbn": "9780141439846"
+  },
+  {
+    "providerWorkId": "OL45880W",
+    "title": "The Picture of Dorian Gray",
+    "authors": [
+      "Oscar Wilde"
+    ],
+    "firstPublished": 1890,
+    "description": "A hedonistic Victorian gentleman remains youthful while his hidden portrait absorbs every sin and year.",
+    "coverTone": "coral",
+    "isbn": "9780141439570"
+  },
+  {
+    "providerWorkId": "OL45885W",
+    "title": "Moby-Dick",
+    "authors": [
+      "Herman Melville"
+    ],
+    "firstPublished": 1851,
+    "description": "Captain Ahab pursues an obsession with a white sperm whale through cetology lectures and stormy seas.",
+    "coverTone": "ink",
+    "isbn": "9780142437247"
+  },
+  {
+    "providerWorkId": "OL45890W",
+    "title": "Heart of Darkness",
+    "authors": [
+      "Joseph Conrad"
+    ],
+    "firstPublished": 1899,
+    "description": "Charles Marlow journeys up the Congo River in search of the enigmatic, ivory-obsessed Mr. Kurtz.",
+    "coverTone": "ink",
+    "isbn": "9780141441672"
+  },
+  {
+    "providerWorkId": "OL27525W",
+    "title": "The Old Man and the Sea",
+    "authors": [
+      "Ernest Hemingway"
+    ],
+    "firstPublished": 1952,
+    "description": "An aging Cuban fisherman battles an epic giant marlin far out in the Gulf Stream.",
+    "coverTone": "acid",
+    "isbn": "9780684801223"
+  },
+  {
+    "providerWorkId": "OL45895W",
+    "title": "The Sun Also Rises",
+    "authors": [
+      "Ernest Hemingway"
+    ],
+    "firstPublished": 1926,
+    "description": "Expatriates drift through Paris cafes and the running of the bulls in Pamplona with disillusioned banter.",
+    "coverTone": "coral",
+    "isbn": "9780743297332"
+  },
+  {
+    "providerWorkId": "OL45905W",
+    "title": "Slaughterhouse-Five",
+    "authors": [
+      "Kurt Vonnegut"
+    ],
+    "firstPublished": 1969,
+    "description": "Billy Pilgrim comes unstuck in time, experiencing the firebombing of Dresden alongside the planet Tralfamadore.",
+    "coverTone": "acid",
+    "isbn": "9780385333849"
+  },
+  {
+    "providerWorkId": "OL45915W",
+    "title": "Catch-22",
+    "authors": [
+      "Joseph Heller"
+    ],
+    "firstPublished": 1961,
+    "description": "A World War II bombardier battles bureaucratic absurdities where sanity is the only proof of insanity.",
+    "coverTone": "coral",
+    "isbn": "9781451626650"
+  },
+  {
+    "providerWorkId": "OL45920W",
+    "title": "One Hundred Years of Solitude",
+    "authors": [
+      "Gabriel García Márquez"
+    ],
+    "firstPublished": 1967,
+    "description": "Seven generations of the Buendía family witness miracles, wars, and solitude in the mythic town of Macondo.",
+    "coverTone": "lavender",
+    "isbn": "9780060883287"
+  },
+  {
+    "providerWorkId": "OL45930W",
+    "title": "The Metamorphosis",
+    "authors": [
+      "Franz Kafka"
+    ],
+    "firstPublished": 1915,
+    "description": "Gregor Samsa wakes to find himself transformed into a monstrous insect and struggles with family rejection.",
+    "coverTone": "ink",
+    "isbn": "9780143105244"
+  },
+  {
+    "providerWorkId": "OL102955W",
+    "title": "The Stranger",
+    "authors": [
+      "Albert Camus"
+    ],
+    "firstPublished": 1942,
+    "description": "Meursault refuses to perform grief after his mother's death and faces an absurd Algerian murder trial.",
+    "coverTone": "acid",
+    "isbn": "9780679720201"
+  },
+  {
+    "providerWorkId": "OL45940W",
+    "title": "Crime and Punishment",
+    "authors": [
+      "Fyodor Dostoevsky"
+    ],
+    "firstPublished": 1866,
+    "description": "An impoverished student murders a pawnbroker to test his extraordinary-man theory and unravels in guilt.",
+    "coverTone": "ink",
+    "isbn": "9780140449136"
+  },
+  {
+    "providerWorkId": "OL45945W",
+    "title": "The Brothers Karamazov",
+    "authors": [
+      "Fyodor Dostoevsky"
+    ],
+    "firstPublished": 1880,
+    "description": "Three brothers grapple with faith, patricide, morality, and the Grand Inquisitor in nineteenth-century Russia.",
+    "coverTone": "ink",
+    "isbn": "9780374528379"
+  },
+  {
+    "providerWorkId": "OL45955W",
+    "title": "War and Peace",
+    "authors": [
+      "Leo Tolstoy"
+    ],
+    "firstPublished": 1869,
+    "description": "Aristocratic Russian families navigate romance, society, and Napoleon's 1812 invasion across epic chapters.",
+    "coverTone": "lavender",
+    "isbn": "9781400079988"
+  },
+  {
+    "providerWorkId": "OL45960W",
+    "title": "Anna Karenina",
+    "authors": [
+      "Leo Tolstoy"
+    ],
+    "firstPublished": 1877,
+    "description": "A married aristocrat's scandalous affair with Count Vronsky leads to social ruin in imperial Russia.",
+    "coverTone": "coral",
+    "isbn": "9780143035008"
+  },
+  {
+    "providerWorkId": "OL45970W",
+    "title": "Madame Bovary",
+    "authors": [
+      "Gustave Flaubert"
+    ],
+    "firstPublished": 1856,
+    "description": "A provincial doctor's wife seeks romantic escape from mundane life through debts and reckless love affairs.",
+    "coverTone": "lavender",
+    "isbn": "9780140449129"
+  },
+  {
+    "providerWorkId": "OL45995W",
+    "title": "Walden",
+    "authors": [
+      "Henry David Thoreau"
+    ],
+    "firstPublished": 1854,
+    "description": "A reflection on simple living in natural surroundings by Walden Pond near Concord, Massachusetts.",
+    "coverTone": "acid",
+    "isbn": "9780140390445"
+  },
+  {
+    "providerWorkId": "OL27535W",
+    "title": "On the Road",
+    "authors": [
+      "Jack Kerouac"
+    ],
+    "firstPublished": 1957,
+    "description": "Sal Paradise and Dean Moriarty travel back and forth across America fueled by jazz, poetry, and freedom.",
+    "coverTone": "coral",
+    "isbn": "9780140283297"
+  },
+  {
+    "providerWorkId": "OL46000W",
+    "title": "Beloved",
+    "authors": [
+      "Toni Morrison"
+    ],
+    "firstPublished": 1987,
+    "description": "A former enslaved woman in Ohio is haunted by the destructive ghost of the daughter she killed to save from slavery.",
+    "coverTone": "ink",
+    "isbn": "9781400033416"
+  },
+  {
+    "providerWorkId": "OL34235W",
+    "title": "Infinite Jest",
+    "authors": [
+      "David Foster Wallace"
+    ],
+    "firstPublished": 1996,
+    "description": "An epic, footnote-dense satire revolving around a tennis academy, halfway house, and a lethally entertaining film cartridge.",
+    "coverTone": "acid",
+    "isbn": "9780316066525"
+  },
+  {
+    "providerWorkId": "OL46015W",
+    "title": "Ulysses",
+    "authors": [
+      "James Joyce"
+    ],
+    "firstPublished": 1922,
+    "description": "Leopold Bloom's day in Dublin on June 16, 1904, rendered through experimental modern stream of consciousness.",
+    "coverTone": "coral",
+    "isbn": "9780679722762"
+  },
+  {
+    "providerWorkId": "OL46045W",
+    "title": "The Bell Jar",
+    "authors": [
+      "Sylvia Plath"
+    ],
+    "firstPublished": 1963,
+    "description": "A talented college woman interning at a New York fashion magazine experiences severe clinical depression.",
+    "coverTone": "lavender",
+    "isbn": "9780060837020"
+  },
+  {
+    "providerWorkId": "OL8178895W",
+    "title": "The Road",
+    "authors": [
+      "Cormac McCarthy"
+    ],
+    "firstPublished": 2006,
+    "description": "A father and his young son walk through a post-apocalyptic, ash-covered America carrying the fire.",
+    "coverTone": "ink",
+    "isbn": "9780307387899"
+  },
+  {
+    "providerWorkId": "OL46050W",
+    "title": "Blood Meridian",
+    "authors": [
+      "Cormac McCarthy"
+    ],
+    "firstPublished": 1985,
+    "description": "The Kid joins the violent Glanton gang hunting scalps along the Texas-Mexico border under the sinister Judge Holden.",
+    "coverTone": "ink",
+    "isbn": "9780679728757"
+  },
+  {
+    "providerWorkId": "OL27540W",
+    "title": "Atlas Shrugged",
+    "authors": [
+      "Ayn Rand"
+    ],
+    "firstPublished": 1957,
+    "description": "Industrialists go on strike against government regulations while an executive seeks the identity of John Galt.",
+    "coverTone": "ink",
+    "isbn": "9780451191144"
+  },
+  {
+    "providerWorkId": "OL102970W",
+    "title": "The Fountainhead",
+    "authors": [
+      "Ayn Rand"
+    ],
+    "firstPublished": 1943,
+    "description": "An uncompromising modernist architect battles traditionalist peers and media critics for creative supremacy.",
+    "coverTone": "coral",
+    "isbn": "9780451191151"
+  },
+  {
+    "providerWorkId": "OL46055W",
+    "title": "Dune",
+    "authors": [
+      "Frank Herbert"
+    ],
+    "firstPublished": 1965,
+    "description": "Paul Atreides navigates political betrayal, giant sandworms, and desert prophecy on the desert planet Arrakis.",
+    "coverTone": "acid",
+    "isbn": "9780441172719"
+  },
+  {
+    "providerWorkId": "OL27545W",
+    "title": "The Fellowship of the Ring",
+    "authors": [
+      "J.R.R. Tolkien"
+    ],
+    "firstPublished": 1954,
+    "description": "Frodo Baggins inherits the One Ring of Sauron and sets out with eight companions to destroy it in Mount Doom.",
+    "coverTone": "acid",
+    "isbn": "9780547928210"
+  },
+  {
+    "providerWorkId": "OL102975W",
+    "title": "The Hobbit",
+    "authors": [
+      "J.R.R. Tolkien"
+    ],
+    "firstPublished": 1937,
+    "description": "Bilbo Baggins is swept into a quest with thirteen dwarves and a wizard to reclaim the Lonely Mountain from Smaug.",
+    "coverTone": "coral",
+    "isbn": "9780547928227"
+  },
+  {
+    "providerWorkId": "OL34240W",
+    "title": "A Game of Thrones",
+    "authors": [
+      "George R.R. Martin"
+    ],
+    "firstPublished": 1996,
+    "description": "Noble houses in Westeros scheme for the Iron Throne while ancient threats awaken beyond the northern ice Wall.",
+    "coverTone": "ink",
+    "isbn": "9780553103540"
+  },
+  {
+    "providerWorkId": "OL8178900W",
+    "title": "The Name of the Wind",
+    "authors": [
+      "Patrick Rothfuss"
+    ],
+    "firstPublished": 2007,
+    "description": "Kvothe narrates his legendary youth as an orphaned street thief, university student, and magician.",
+    "coverTone": "lavender",
+    "isbn": "9780756404741"
+  },
+  {
+    "providerWorkId": "OL8178905W",
+    "title": "Mistborn: The Final Empire",
+    "authors": [
+      "Brandon Sanderson"
+    ],
+    "firstPublished": 2006,
+    "description": "A crew of allomantic thieves attempts an impossible heist to overthrow a thousand-year immortal tyrant.",
+    "coverTone": "coral",
+    "isbn": "9780765311788"
+  },
+  {
+    "providerWorkId": "OL15949230W",
+    "title": "The Way of Kings",
+    "authors": [
+      "Brandon Sanderson"
+    ],
+    "firstPublished": 2010,
+    "description": "Warriors and scholars face highstorms and magical spren on the shattered plains of Roshar.",
+    "coverTone": "acid",
+    "isbn": "9780765326355"
+  },
+  {
+    "providerWorkId": "OL46085W",
+    "title": "The Eye of the World",
+    "authors": [
+      "Robert Jordan"
+    ],
+    "firstPublished": 1990,
+    "description": "Three village youths flee their home with an Aes Sedai as the Dark One seeks the Dragon Reborn.",
+    "coverTone": "lavender",
+    "isbn": "9780312850098"
+  },
+  {
+    "providerWorkId": "OL14933430W",
+    "title": "Eragon",
+    "authors": [
+      "Christopher Paolini"
+    ],
+    "firstPublished": 2002,
+    "description": "A farm boy finds a blue dragon egg in the Spine mountains and enters the ancient order of Dragon Riders.",
+    "coverTone": "acid",
+    "isbn": "9780375826689"
+  },
+  {
+    "providerWorkId": "OL8178925W",
+    "title": "The Hunger Games",
+    "authors": [
+      "Suzanne Collins"
+    ],
+    "firstPublished": 2008,
+    "description": "Katniss Everdeen volunteers for her sister in a televised death match held in the ruins of North America.",
+    "coverTone": "coral",
+    "isbn": "9780439023481"
+  },
+  {
+    "providerWorkId": "OL16560980W",
+    "title": "Divergent",
+    "authors": [
+      "Veronica Roth"
+    ],
+    "firstPublished": 2011,
+    "description": "In a faction-divided future Chicago, a teenager discovers she does not fit into a single personality virtue.",
+    "coverTone": "ink",
+    "isbn": "9780062024039"
+  },
+  {
+    "providerWorkId": "OL58165W",
+    "title": "The Lightning Thief",
+    "authors": [
+      "Rick Riordan"
+    ],
+    "firstPublished": 2005,
+    "description": "A twelve-year-old boy discovers his father is Poseidon and gets accused of stealing Zeus's master lightning bolt.",
+    "coverTone": "coral",
+    "isbn": "9780786856299"
+  },
+  {
+    "providerWorkId": "OL46115W",
+    "title": "Neuromancer",
+    "authors": [
+      "William Gibson"
+    ],
+    "firstPublished": 1984,
+    "description": "A washed-up computer hacker in Chiba City is hired by a mysterious ex-military officer for a matrix heist.",
+    "coverTone": "acid",
+    "isbn": "9780441569595"
+  },
+  {
+    "providerWorkId": "OL25820W",
+    "title": "Snow Crash",
+    "authors": [
+      "Neal Stephenson"
+    ],
+    "firstPublished": 1992,
+    "description": "A pizza delivery driver and hacker in franchise-governed America uncovers a linguistic metaverse virus.",
+    "coverTone": "coral",
+    "isbn": "9780553380958"
+  },
+  {
+    "providerWorkId": "OL46135W",
+    "title": "Ender's Game",
+    "authors": [
+      "Orson Scott Card"
+    ],
+    "firstPublished": 1985,
+    "description": "A brilliant young boy is recruited to orbital Battle School to train in zero-gravity combat for an alien war.",
+    "coverTone": "lavender",
+    "isbn": "9780812550702"
+  },
+  {
+    "providerWorkId": "OL8178945W",
+    "title": "The Three-Body Problem",
+    "authors": [
+      "Cixin Liu"
+    ],
+    "firstPublished": 2008,
+    "description": "A secret military project in China during the Cultural Revolution makes first contact with an alien civilization in crisis.",
+    "coverTone": "ink",
+    "isbn": "9780765377067"
+  },
+  {
+    "providerWorkId": "OL17081720W",
+    "title": "Red Rising",
+    "authors": [
+      "Pierce Brown"
+    ],
+    "firstPublished": 2014,
+    "description": "A low-caste miner on Mars infiltrates the ruling Gold hierarchy to overthrow the color-coded caste society.",
+    "coverTone": "coral",
+    "isbn": "9780345539786"
+  },
+  {
+    "providerWorkId": "OL46150W",
+    "title": "Hyperion",
+    "authors": [
+      "Dan Simmons"
+    ],
+    "firstPublished": 1989,
+    "description": "Seven pilgrims travel to the Time Tombs on Hyperion sharing their personal tales before meeting the Shrike.",
+    "coverTone": "lavender",
+    "isbn": "9780553283686"
+  },
+  {
+    "providerWorkId": "OL27560W",
+    "title": "Foundation",
+    "authors": [
+      "Isaac Asimov"
+    ],
+    "firstPublished": 1951,
+    "description": "Psychohistorian Hari Seldon establishes an encyclopedia project on a remote planet to shorten galactic dark ages.",
+    "coverTone": "acid",
+    "isbn": "9780553293357"
+  },
+  {
+    "providerWorkId": "OL46160W",
+    "title": "Do Androids Dream of Electric Sheep?",
+    "authors": [
+      "Philip K. Dick"
+    ],
+    "firstPublished": 1968,
+    "description": "A bounty hunter in post-apocalyptic San Francisco is tasked with retiring rogue Nexus-6 androids.",
+    "coverTone": "coral",
+    "isbn": "9780345404473"
+  },
+  {
+    "providerWorkId": "OL46195W",
+    "title": "The Left Hand of Darkness",
+    "authors": [
+      "Ursula K. Le Guin"
+    ],
+    "firstPublished": 1969,
+    "description": "A human envoy travels to the icy world of Gethen, whose ambisexual inhabitants challenge Terran preconceptions.",
+    "coverTone": "lavender",
+    "isbn": "9780441478125"
+  },
+  {
+    "providerWorkId": "OL46220W",
+    "title": "Good Omens",
+    "authors": [
+      "Neil Gaiman",
+      "Terry Pratchett"
+    ],
+    "firstPublished": 1990,
+    "description": "An angel and a demon who have grown fond of comfortable Earth life conspire to sabotage the looming Apocalypse.",
+    "coverTone": "acid",
+    "isbn": "9780060853983"
+  },
+  {
+    "providerWorkId": "OL46225W",
+    "title": "American Gods",
+    "authors": [
+      "Neil Gaiman"
+    ],
+    "firstPublished": 2001,
+    "description": "An ex-convict becomes bodyguard to the mysterious Mr. Wednesday during a quiet war between old and new gods.",
+    "coverTone": "ink",
+    "isbn": "9780380973651"
+  },
+  {
+    "providerWorkId": "OL46255W",
+    "title": "Guards! Guards!",
+    "authors": [
+      "Terry Pratchett"
+    ],
+    "firstPublished": 1989,
+    "description": "The cynical Night Watch of Ankh-Morpork and a six-foot dwarf recruit face a summoned noble dragon.",
+    "coverTone": "coral",
+    "isbn": "9780062225757"
+  },
+  {
+    "providerWorkId": "OL8178955W",
+    "title": "The Blade Itself",
+    "authors": [
+      "Joe Abercrombie"
+    ],
+    "firstPublished": 2006,
+    "description": "A crippled inquisitor, a barbarian warrior, and a vain nobleman are pulled into the schemes of the First Mage.",
+    "coverTone": "ink",
+    "isbn": "9780316387316"
+  }
+]

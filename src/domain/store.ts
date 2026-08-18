@@ -97,6 +97,19 @@ export function createMemoryStore(options: { seed?: boolean } = { seed: true }) 
   function listBooks() {
     return clone(state.books);
   }
+  function searchBooks(query: string, limit = 20) {
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) return [];
+    return clone(
+      state.books
+        .filter((book) =>
+          [book.title, ...book.authors, book.slug, book.sourceId ?? ""].some((value) =>
+            value.toLowerCase().includes(normalized),
+          ),
+        )
+        .slice(0, limit),
+    );
+  }
 
   function upsertBook(input: BookWork) {
     const existing = state.books.find((book) => book.id === input.id || (input.sourceId && book.sourceId === input.sourceId));
@@ -400,6 +413,7 @@ export function createMemoryStore(options: { seed?: boolean } = { seed: true }) 
     setBookmark,
     setFollow,
     setReaction,
+    searchBooks,
     upsertBook,
     updateRoast,
   };

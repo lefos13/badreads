@@ -118,4 +118,21 @@ describe("memory product store", () => {
     expect(store.getProfile(profileResult.data.id)).toBeUndefined();
     expect(store.listRoasts()).toHaveLength(0);
   });
+
+  it("searches books by title, author, slug, and source ID", () => {
+    const store = createMemoryStore({ seed: true });
+    const alchemistMatches = store.searchBooks("Alchemist");
+    expect(alchemistMatches.length).toBeGreaterThan(0);
+    expect(alchemistMatches[0].title).toBe("The Alchemist");
+
+    const authorMatches = store.searchBooks("Paulo");
+    expect(authorMatches.length).toBeGreaterThan(0);
+    expect(authorMatches[0].authors).toContain("Paulo Coelho");
+
+    const emptyMatches = store.searchBooks("nonexistent-query-xyz");
+    expect(emptyMatches).toHaveLength(0);
+
+    const blankMatches = store.searchBooks("   ");
+    expect(blankMatches).toHaveLength(0);
+  });
 });

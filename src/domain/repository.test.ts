@@ -33,4 +33,13 @@ describe("domain store runtime selection", () => {
 
     expect(summary).toMatchObject({ count: expect.any(Number), worstCount: expect.any(Number) });
   });
+
+  it("supports asynchronous book searching", async () => {
+    process.env.DEMO_MODE = "true";
+
+    const store = getDomainStore();
+    const results = await store.searchBooks("Fourth Wing");
+
+    expect(results.some((book) => book.title.includes("Fourth Wing"))).toBe(true);
+  });
 });
