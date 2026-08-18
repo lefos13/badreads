@@ -4,6 +4,7 @@ import { magicLink } from "better-auth/plugins";
 import { Resend } from "resend";
 import { db } from "@/src/db";
 import * as schema from "@/src/db/schema";
+import { normalizeAppUrl } from "./url-config";
 
 const secret = process.env.BETTER_AUTH_SECRET ?? "badreads-local-development-secret-please-change";
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -30,10 +31,12 @@ const magicLinkPlugin = magicLink({
   rateLimit: { window: 60, max: 5 },
 });
 
+const authUrl = normalizeAppUrl(process.env.BETTER_AUTH_URL);
+
 const baseOptions = {
   secret,
-  baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
-  trustedOrigins: [process.env.BETTER_AUTH_URL ?? "http://localhost:3000"],
+  baseURL: authUrl,
+  trustedOrigins: [authUrl],
   emailAndPassword: { enabled: false },
   plugins: [magicLinkPlugin],
 };
