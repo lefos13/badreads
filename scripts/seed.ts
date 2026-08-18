@@ -20,12 +20,14 @@ import { launchSeed } from "@/src/data/launch-seed";
 async function seedDatabase(database: NonNullable<typeof db>) {
   const seedDate = new Date("2026-08-01T00:00:00.000Z");
 
+  /* Seeded readers are trusted launch identities, so their Better Auth
+   * verification state is represented by the same boolean as live users. */
   await database
     .insert(users)
     .values(
       launchSeed.users.map((user) => ({
         ...user,
-        emailVerified: seedDate,
+        emailVerified: true,
         createdAt: seedDate,
         updatedAt: seedDate,
       })),

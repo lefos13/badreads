@@ -27,11 +27,16 @@ export const reactionKind = pgEnum("reaction_kind", ["FAIR", "FUNNY"]);
 export const reportCategory = pgEnum("report_category", ["PERSONAL_ATTACK", "HATE", "SPOILER", "SPAM", "COPYRIGHT", "OTHER"]);
 export const reportStatus = pgEnum("report_status", ["OPEN", "UPHELD", "DISMISSED"]);
 
+/*
+ * Better Auth models email verification as a durable boolean state. Keeping
+ * that contract in the Drizzle schema prevents magic-link user creation from
+ * writing a boolean into the previous timestamp column.
+ */
 export const users = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull(),
-  emailVerified: timestamp("email_verified", { withTimezone: true }),
+  emailVerified: boolean("email_verified").notNull().default(false),
   image: text("image"),
   role: userRole("role").notNull().default("MEMBER"),
   status: userStatus("status").notNull().default("ACTIVE"),

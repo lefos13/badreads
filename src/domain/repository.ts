@@ -473,14 +473,15 @@ function createPostgresStore(database: Database): DomainStore {
     if (deleted && user) {
       /* Remove credentials and personal identifiers while retaining any audit
        * rows that point at this moderator user. Public profile data and
-       * score-bearing roasts are removed through the profile cascade above. */
+       * score-bearing roasts are removed through the profile cascade above;
+       * the login identity is also explicitly marked unverified. */
       await database.delete(schema.sessions).where(eq(schema.sessions.userId, user.id));
       await database.delete(schema.accounts).where(eq(schema.accounts.userId, user.id));
       await database.delete(schema.verifications).where(eq(schema.verifications.identifier, user.email));
       await database.update(schema.users).set({
         name: "Deleted reader",
         email: `deleted-${user.id}-${Date.now()}@invalid.badreads.local`,
-        emailVerified: null,
+        emailVerified: false,
         image: null,
         status: "DELETED",
         updatedAt: new Date(),

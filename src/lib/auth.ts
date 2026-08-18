@@ -3,9 +3,9 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { magicLink } from "better-auth/plugins";
 import { Resend } from "resend";
 import { db } from "@/src/db";
-import * as schema from "@/src/db/schema";
 import { getAuthRuntimeMode, hasEmailDeliveryConfig, isDemoMode } from "./runtime-config";
 import { normalizeAppUrl } from "./url-config";
+import { authDatabaseOptions } from "./auth-database";
 
 const secret = process.env.BETTER_AUTH_SECRET?.trim() || (process.env.NODE_ENV === "production" ? null : "badreads-local-development-secret-please-change");
 if (!secret) throw new Error("BETTER_AUTH_SECRET is required in production.");
@@ -49,6 +49,6 @@ const baseOptions = {
 export const auth = db
   ? betterAuth({
       ...baseOptions,
-      database: drizzleAdapter(db, { provider: "pg", schema, usePlural: false }),
+      database: drizzleAdapter(db, authDatabaseOptions),
     })
   : betterAuth(baseOptions);

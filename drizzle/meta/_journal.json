@@ -15,6 +15,13 @@
       "when": 1787061164061,
       "tag": "0001_shallow_vulture",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787077968999,
+      "tag": "0002_bizarre_johnny_storm",
+      "breakpoints": true
     }
   ]
 }
