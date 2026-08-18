@@ -26,3 +26,10 @@ test("structured roast form exposes evidence, inverted rating, and flaw tags", a
   await expect(page.getByRole("checkbox", { name: "PROSE" })).toBeVisible();
   await expect(page.getByRole("checkbox", { name: /16 or older/ })).toHaveCount(0);
 });
+
+test("local demo sign-in does not pretend to send an email", async ({ page }) => {
+  await page.goto("/sign-in");
+  await expect(page.getByText("Local demo / no email required")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Continue in local demo" })).toHaveAttribute("href", "/write");
+  await expect(page.getByLabel("Email address")).toHaveCount(0);
+});

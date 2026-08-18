@@ -25,6 +25,18 @@ export function SignInForm({ demoMode, registrationEnabled }: { demoMode: boolea
     else setMessage("Check your inbox. The door is open for five minutes.");
   }
 
+  if (demoMode) {
+    return (
+      <div className="form-shell">
+        <span className="eyebrow mono">Local demo / no email required</span>
+        <h1>Come say the quiet part.</h1>
+        <p className="form-intro">This local workspace uses a demo session, so no email address or Resend domain is needed.</p>
+        <Link className="button button-primary" href="/write">Continue in local demo</Link>
+        <p className="field-help">Set <code>DEMO_MODE=false</code> only after configuring a database, Better Auth secret, and email delivery.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="form-shell">
       <span className="eyebrow mono">Private email / public handle</span>
@@ -39,7 +51,6 @@ export function SignInForm({ demoMode, registrationEnabled }: { demoMode: boolea
       </form>
       {message ? <p aria-live="polite" className="form-success">{message}</p> : null}
       {error ? <p aria-live="polite" className="form-error">{error}</p> : null}
-      {demoMode ? <p className="field-help">Local demo mode is active, so you can <Link href="/write">continue straight to the roast form</Link> without an email provider.</p> : null}
     </div>
   );
 }

@@ -4,16 +4,21 @@ import { magicLink } from "better-auth/plugins";
 import { Resend } from "resend";
 import { db } from "@/src/db";
 import * as schema from "@/src/db/schema";
+import { getAuthRuntimeMode, hasEmailDeliveryConfig, isDemoMode } from "./runtime-config";
 import { normalizeAppUrl } from "./url-config";
 
-const secret = process.env.BETTER_AUTH_SECRET ?? "badreads-local-development-secret-please-change";
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-const from = process.env.RESEND_FROM_EMAIL ?? "Badreads <hello@example.com>";
+const secret = process.env.BETTER_AUTH_SECRET?.trim() || (process.env.NODE_ENV === "production" ? null : "badreads-local-development-secret-please-change");
+if (!secret) throw new Error("BETTER_AUTH_SECRET is required in production.");
+
+const resend = hasEmailDeliveryConfig() ? new Resend(process.env.RESEND_API_KEY) : null;
+const from = process.env.RESEND_FROM_EMAIL?.trim() || "Badreads <onboarding@resend.dev>";
 
 async function sendMagicLink({ email, url }: { email: string; url: string }) {
   if (!resend) {
-    if (process.env.NODE_ENV === "production") throw new Error("Email delivery is not configured.");
-    return;
+    const mode = getAuthRuntimeMode();
+    throw new Error(mode === "demo" && isDemoMode()
+      ? "Magic-link sign-in is disabled in local demo mode."
+      : "Magic-link email delivery is not configured.");
   }
   const response = await resend.emails.send({
     from,

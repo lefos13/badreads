@@ -1,5 +1,6 @@
 import { toNextJsHandler } from "better-auth/next-js";
 import { auth } from "@/src/lib/auth";
+import { getAuthRuntimeMode, hasEmailDeliveryConfig, isDemoMode } from "@/src/lib/runtime-config";
 
 const handlers = toNextJsHandler(auth);
 
@@ -18,6 +19,12 @@ export async function POST(request: Request) {
   const isMagicLinkIssue = new URL(request.url).pathname.endsWith("/sign-in/magic-link");
   if (isMagicLinkIssue && process.env.REGISTRATION_ENABLED === "false") {
     return Response.json({ ok: false, error: { code: "FORBIDDEN", message: "Registration is currently paused." } }, { status: 403 });
+  }
+  if (isMagicLinkIssue && isDemoMode()) {
+    return Response.json({ ok: false, error: { code: "FORBIDDEN", message: "Magic-link sign-in is disabled in local demo mode. Use the demo access button." } }, { status: 403 });
+  }
+  if (isMagicLinkIssue && !hasEmailDeliveryConfig()) {
+    return Response.json({ ok: false, error: { code: "SERVICE_UNAVAILABLE", message: `Magic-link delivery is not configured (${getAuthRuntimeMode()} mode).` } }, { status: 503 });
   }
   return handlers.POST(request);
 }

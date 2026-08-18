@@ -1,8 +1,9 @@
 import { headers } from "next/headers";
 import { auth } from "./auth";
+import { isDemoMode } from "./runtime-config";
 
 export async function getSession() {
-  if (process.env.DEMO_MODE !== "false" && !process.env.DATABASE_URL) {
+  if (isDemoMode()) {
     return { user: { id: "profile-mara", email: "demo@badreads.local", name: "Mara Reads" } };
   }
 
