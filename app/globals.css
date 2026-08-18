@@ -120,7 +120,9 @@ button { cursor: pointer; }
 .spoiler-box summary { color: var(--muted); cursor: pointer; font-size: 0.78rem; }
 .spoiler-box p { margin-top: 0.6rem; }
 .roast-book { color: var(--muted); font-size: 0.82rem; margin-top: 1rem; }
-.roast-actions { border-top: 1px solid var(--line); display: flex; gap: 0.8rem; margin-top: 1.1rem; padding-top: 0.8rem; }
+.roast-actions { display: flex; gap: 0.8rem; }
+.roast-actions-row { align-items: center; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 0.8rem; justify-content: space-between; margin-top: 1.1rem; padding-top: 0.8rem; }
+.share-button { font-family: "DM Mono", monospace; }
 .reaction { background: transparent; border: 0; color: var(--muted); font-size: 0.76rem; padding: 0; }
 .reaction:hover { color: var(--ink); }
 .reaction-active { color: var(--ink); font-weight: 600; }

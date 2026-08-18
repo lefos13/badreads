@@ -8,6 +8,17 @@ import type { Bottom100SortOption } from "@/src/domain/types";
 export const metadata: Metadata = {
   title: "The Bottom 100 — Badreads",
   description: "The 100 worst-rated bestsellers on record. High-volume disappointments with verified receipts.",
+  openGraph: {
+    title: "The Bottom 100 — Badreads",
+    description: "The 100 worst-rated bestsellers on record. High-volume disappointments with verified receipts.",
+    images: [{ url: "/api/og/bottom-100", width: 1200, height: 630, alt: "The Bottom 100 on Badreads" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "The Bottom 100 — Badreads",
+    description: "The 100 worst-rated bestsellers on record. High-volume disappointments with verified receipts.",
+    images: ["/api/og/bottom-100"],
+  },
 };
 
 export const dynamic = "force-dynamic";

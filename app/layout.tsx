@@ -25,7 +25,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <footer className="footer">
             <div className="page-width footer-inner">
               <span className="mono">BADREADS / A HOME FOR HONEST DISAPPOINTMENT</span>
-              <span className="footer-links"><Link href="/community">Community</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></span>
+              <span className="footer-links">
+                <Link href="/community">Community</Link>
+                <Link href="/privacy">Privacy</Link>
+                <Link href="/terms">Terms</Link>
+                <a href="/feed.xml" title="RSS Feed">RSS</a>
+              </span>
             </div>
           </footer>
         </div>

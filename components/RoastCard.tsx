@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BADNESS_LABELS } from "@/src/domain/core";
 import type { ReactionState, Roast } from "@/src/domain/types";
 import { ReactionButtons } from "./ReactionButtons";
+import { ShareReceiptButton } from "./ShareReceiptButton";
 
 type RoastCardProps = {
   roast: Roast;
@@ -25,7 +26,16 @@ export function RoastCard({ roast, bookTitle, bookSlug, reactionState }: RoastCa
         <span className="badness-stars" title={BADNESS_LABELS[roast.rating]}>{"★".repeat(roast.rating)}{"☆".repeat(5 - roast.rating)}</span>
         <span className="mono"> {BADNESS_LABELS[roast.rating]}</span>
       </div>
-      <ReactionButtons initialState={reactionState} roast={roast} />
+      <div className="roast-actions-row">
+        <ReactionButtons initialState={reactionState} roast={roast} />
+        <ShareReceiptButton
+          authorHandle={roast.author.handle}
+          bookTitle={bookTitle}
+          hook={roast.hook}
+          rating={roast.rating}
+          roastId={roast.id}
+        />
+      </div>
     </article>
   );
 }

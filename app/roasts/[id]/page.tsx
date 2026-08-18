@@ -6,6 +6,7 @@ import { getDomainStore } from "@/src/domain/repository";
 import type { ReactionState } from "@/src/domain/types";
 import { ReactionButtons } from "@/components/ReactionButtons";
 import { ReportForm } from "@/components/ReportForm";
+import { ShareReceiptButton } from "@/components/ShareReceiptButton";
 import { hasModeratorAccess } from "@/src/lib/authorization";
 import { getSession } from "@/src/lib/session";
 
@@ -16,7 +17,24 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: RoastPageProps): Promise<Metadata> {
   const { id } = await params;
   const roast = await getDomainStore().getRoast(id);
-  return roast && roast.status === "PUBLISHED" ? { title: `${roast.hook} — Badreads`, description: roast.body } : {};
+  if (!roast || roast.status !== "PUBLISHED") return {};
+  const ogImageUrl = `/api/og/roast/${roast.id}`;
+  return {
+    title: `${roast.hook} — Badreads`,
+    description: roast.body,
+    openGraph: {
+      title: `${roast.hook} — Badreads`,
+      description: roast.body,
+      type: "article",
+      images: [{ url: ogImageUrl, width: 1200, height: 630, alt: roast.hook }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${roast.hook} — Badreads`,
+      description: roast.body,
+      images: [ogImageUrl],
+    },
+  };
 }
 
 export default async function RoastPage({ params }: RoastPageProps) {
@@ -46,7 +64,19 @@ export default async function RoastPage({ params }: RoastPageProps) {
       </div>
       {roast.spoiler ? <details className="spoiler-box roast-long-body"><summary>Spoiler evidence — reveal</summary><p className="hero-copy">{roast.body}</p></details> : <p className="hero-copy roast-long-body">{roast.body}</p>}
       <div className="tag-grid tag-list">{roast.flawTags.map((tag) => <span className="tag-option selected" key={tag}>{tag.replaceAll("_", " ")}</span>)}</div>
-      {roast.status === "PUBLISHED" ? <><ReactionButtons initialState={reactionStates[roast.id]} roast={roast} /><ReportForm roastId={roast.id} /></> : null}
+      {roast.status === "PUBLISHED" ? (
+        <div className="roast-actions-row">
+          <ReactionButtons initialState={reactionStates[roast.id]} roast={roast} />
+          <ShareReceiptButton
+            authorHandle={roast.author.handle}
+            bookTitle={book.title}
+            hook={roast.hook}
+            rating={roast.rating}
+            roastId={roast.id}
+          />
+          <ReportForm roastId={roast.id} />
+        </div>
+      ) : null}
       <div className="hero-actions">
         <Link className="button button-primary" href={`/books/${book.slug}`}>See all roasts</Link>
         <Link className="button button-quiet" href={`/write?book=${book.slug}`}>Add your verdict</Link>
