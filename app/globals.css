@@ -136,6 +136,9 @@ button { cursor: pointer; }
 .search-result { align-items: center; border-bottom: 1px solid var(--line); display: flex; gap: 1rem; padding: 1rem 0; }
 .search-result-cover { background: var(--acid); border: 1px solid var(--ink); flex: 0 0 3.4rem; height: 5rem; }
 .search-result h2 { font-size: 1.05rem; margin: 0; }
+.search-arrow { margin-left: auto; }
+.search-empty { margin-top: 2rem; }
+.sr-only { height: 1px; margin: -1px; overflow: hidden; position: absolute; width: 1px; clip: rect(0, 0, 0, 0); }
 
 .book-hero { border-bottom: 1px solid var(--line); padding: 4.5rem 0 3.5rem; }
 .book-layout { align-items: start; display: grid; gap: 3rem; grid-template-columns: 16rem minmax(0, 1fr); }
@@ -161,6 +164,9 @@ button { cursor: pointer; }
 .tag-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .tag-option { border: 1px solid var(--line); font-size: 0.75rem; padding: 0.45rem 0.65rem; }
 .tag-option.selected { background: var(--acid); border-color: var(--ink); }
+.tag-list { margin-top: 1.5rem; }
+.roast-long-body { margin-top: 2rem; max-width: 44rem; }
+.roast-book-list { margin-top: 1rem; }
 .form-error { background: #ffe1d9; border: 1px solid var(--coral); padding: 0.7rem 0.8rem; }
 
 .empty-state { border: 1px dashed var(--line); color: var(--muted); padding: 2rem; }
