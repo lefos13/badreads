@@ -57,10 +57,10 @@ export function setLatestDevMagicLink(email: string, url: string, token?: string
 
 async function sendMagicLink({ email, url, token }: { email: string; url: string; token?: string }) {
   const normalizedEmail = email.trim().toLowerCase();
-  const isBypass = isBypassEmail(normalizedEmail);
   const isDev = process.env.NODE_ENV !== "production";
+  const allowDevBypass = isDev && (isBypassEmail(normalizedEmail) || !resend);
 
-  if (isBypass || (isDev && !resend)) {
+  if (allowDevBypass) {
     setLatestDevMagicLink(normalizedEmail, url, token);
     // eslint-disable-next-line no-console
     console.info("\n========================================================");
@@ -95,12 +95,27 @@ const magicLinkPlugin = magicLink({
   rateLimit: { window: 60, max: 5 },
 });
 
-const authUrl = normalizeAppUrl(process.env.BETTER_AUTH_URL);
+const authUrl = normalizeAppUrl(
+  process.env.BETTER_AUTH_URL
+  || process.env.NEXT_PUBLIC_BETTER_AUTH_URL
+  || process.env.NEXT_PUBLIC_SITE_URL
+  || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined),
+);
+
+const trustedOrigins = Array.from(new Set([
+  authUrl,
+  "https://badreads.vercel.app",
+  ...(process.env.NEXT_PUBLIC_SITE_URL ? [normalizeAppUrl(process.env.NEXT_PUBLIC_SITE_URL)] : []),
+  ...(process.env.NEXT_PUBLIC_BETTER_AUTH_URL ? [normalizeAppUrl(process.env.NEXT_PUBLIC_BETTER_AUTH_URL)] : []),
+  ...(process.env.BETTER_AUTH_URL ? [normalizeAppUrl(process.env.BETTER_AUTH_URL)] : []),
+  ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
+  ...(process.env.VERCEL_PROJECT_PRODUCTION_URL ? [`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`] : []),
+])).filter(Boolean);
 
 const baseOptions = {
   secret,
   baseURL: authUrl,
-  trustedOrigins: [authUrl],
+  trustedOrigins,
   emailAndPassword: { enabled: false },
   plugins: [magicLinkPlugin],
 };
