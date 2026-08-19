@@ -40,4 +40,11 @@ describe("catalog service local-first search", () => {
     const book = await resolveCatalogWork("OL999999999W");
     expect(book).toBeNull();
   });
+
+  it("silently ingests upstream results into domain store during live search", async () => {
+    process.env.OPEN_LIBRARY_LIVE = "true";
+
+    const upstreamResult = await searchCatalog("UniqueNovelTitle12345");
+    expect(upstreamResult).toBeDefined();
+  });
 });

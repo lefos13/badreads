@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SearchForm } from "@/components/SearchForm";
 import { searchCatalog } from "@/src/catalog/service";
 import { getDomainStore } from "@/src/domain/repository";
 import { BADNESS_LABELS } from "@/src/domain/core";
@@ -37,11 +38,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       <span className="eyebrow mono">Open the file / find the target</span>
       <h1>Find a book to blame.</h1>
       <p className="hero-copy">Search the catalog, pick the work that disappointed you, and give the group chat the evidence.</p>
-      <form className="search-form" method="get">
-        <label className="sr-only" htmlFor="book-search">Search books</label>
-        <input className="text-input" defaultValue={query} id="book-search" name="q" placeholder="Try The Alchemist, Fourth Wing…" type="search" />
-        <button className="button button-primary" type="submit">Search</button>
-      </form>
+      <SearchForm initialQuery={query} />
       {query && !result && !upstreamError ? <p className="form-error">Search for at least two characters.</p> : null}
       {upstreamError ? <p className="form-error" role="alert">The catalog is taking a break. Try again in a moment.</p> : null}
       {result ? (

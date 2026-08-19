@@ -251,6 +251,24 @@ button { cursor: pointer; }
 
 .bottom-100-card-actions { border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 1.5rem; padding-top: 1.2rem; }
 
+.search-input-wrapper { display: flex; flex: 1; min-width: 0; position: relative; }
+.search-text-input { flex: 1; padding-right: 7.5rem; width: 100%; }
+.search-camera-btn { align-items: center; background: #fffdf7; border: 1px solid var(--line); color: var(--ink); cursor: pointer; display: inline-flex; font-size: 0.78rem; font-weight: 600; gap: 0.3rem; padding: 0.4rem 0.65rem; position: absolute; right: 0.45rem; top: 50%; transform: translateY(-50%); transition: all 120ms ease; }
+.search-camera-btn:hover { background: var(--acid); border-color: var(--ink); }
+.search-camera-label { font-family: "DM Mono", monospace; }
+
+.modal-backdrop { align-items: center; background: rgba(18, 17, 16, 0.85); display: flex; inset: 0; justify-content: center; padding: 1rem; position: fixed; z-index: 1000; }
+.modal-card { background: var(--paper); border: 2px solid var(--ink); box-shadow: 8px 8px 0 var(--ink); max-width: 32rem; padding: 1.5rem; position: relative; width: 100%; }
+.modal-header { align-items: center; display: flex; justify-content: space-between; margin-bottom: 1rem; }
+.scanner-viewfinder { aspect-ratio: 4/3; background: #000; border: 2px solid var(--ink); overflow: hidden; position: relative; width: 100%; }
+.scanner-video { height: 100%; object-fit: cover; width: 100%; }
+.scanner-target-reticle { border: 2px dashed rgba(213, 255, 95, 0.8); inset: 15%; position: absolute; pointer-events: none; }
+.scanner-laser { animation: scanLaser 2s ease-in-out infinite alternate; background: var(--coral); box-shadow: 0 0 8px var(--coral); height: 2px; left: 15%; position: absolute; right: 15%; top: 50%; }
+
+@keyframes scanLaser {
+  0% { transform: translateY(-3.5rem); opacity: 0.6; }
+  100% { transform: translateY(3.5rem); opacity: 1; }
+}
 @media (max-width: 800px) {
   .bottom-100-main { grid-template-columns: 1fr; }
   .bottom-100-cover { max-width: 10rem; }

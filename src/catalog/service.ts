@@ -1,6 +1,20 @@
 import { getDomainStore } from "@/src/domain/repository";
 import type { BookWork } from "@/src/domain/types";
 import { OpenLibraryProvider, type CatalogResult, type CatalogSearchResult } from "./open-library";
+const COVER_TONES = ["coral", "acid", "lavender", "ink"] as const;
+
+function determineCoverTone(providerWorkId: string): (typeof COVER_TONES)[number] {
+  let hash = 0;
+  for (let i = 0; i < providerWorkId.length; i++) {
+    hash = (hash * 31 + providerWorkId.charCodeAt(i)) >>> 0;
+  }
+  return COVER_TONES[hash % COVER_TONES.length];
+}
+
+function slugify(title: string, providerWorkId: string) {
+  const titleSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 70);
+  return `${titleSlug || "book"}-${providerWorkId.toLowerCase()}`;
+}
 
 export type EnhancedCatalogResult = CatalogResult & {
   slug?: string;
@@ -10,7 +24,6 @@ export type EnhancedCatalogResult = CatalogResult & {
 export type SearchCatalogResult = Omit<CatalogSearchResult, "results"> & {
   results: EnhancedCatalogResult[];
 };
-
 function mapBookToCatalogResult(book: BookWork): EnhancedCatalogResult {
   return {
     provider: "openlibrary" as const,
@@ -41,17 +54,45 @@ export async function searchCatalog(
         contactEmail: process.env.OPEN_LIBRARY_CONTACT_EMAIL,
       });
       const upstream = await provider.search(query, cursor);
-
       const localWorkIds = new Set(
         localResults.map((item) => item.providerWorkId.toLowerCase()),
       );
+
+      const newUpstreamItems = upstream.results.filter(
+        (item) => !localWorkIds.has(item.providerWorkId.toLowerCase()),
+      );
+
+      const enhancedUpstreamResults: EnhancedCatalogResult[] = newUpstreamItems.map((item) => ({
+        ...item,
+        slug: slugify(item.title, item.providerWorkId),
+        localBookId: `book-${item.providerWorkId.toLowerCase()}`,
+      }));
+
+      // Silent background ingestion of upstream search results into domain store
+      if (enhancedUpstreamResults.length > 0) {
+        void Promise.allSettled(
+          enhancedUpstreamResults.map((item) =>
+            store.upsertBook({
+              id: item.localBookId ?? `book-${item.providerWorkId.toLowerCase()}`,
+              slug: item.slug ?? slugify(item.title, item.providerWorkId),
+              title: item.title,
+              authors: item.authors.length ? item.authors : ["Unknown author"],
+              firstPublished: item.firstPublished,
+              description: "Catalog record imported from Open Library. Add the first evidence-backed verdict.",
+              coverTone: determineCoverTone(item.providerWorkId),
+              sourceId: item.providerWorkId,
+              coverUrl: item.coverUrl ?? undefined,
+            }),
+          ),
+        ).catch(() => {
+          // Non-blocking background task; swallow error
+        });
+      }
+
       const mergedResults: EnhancedCatalogResult[] = [
         ...localResults,
-        ...upstream.results.filter(
-          (item) => !localWorkIds.has(item.providerWorkId.toLowerCase()),
-        ),
+        ...enhancedUpstreamResults,
       ];
-
       return {
         total: localResults.length + upstream.total,
         results: mergedResults,
