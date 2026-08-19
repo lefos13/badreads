@@ -55,20 +55,56 @@ export function setLatestDevMagicLink(email: string, url: string, token?: string
     createdAt: Date.now(),
   });
 }
+function getCanonicalAuthUrl(): string {
+  const custom = cleanEnvString(process.env.BETTER_AUTH_URL)
+    || cleanEnvString(process.env.NEXT_PUBLIC_BETTER_AUTH_URL)
+    || cleanEnvString(process.env.NEXT_PUBLIC_SITE_URL);
+  if (custom) return normalizeAppUrl(custom);
+
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return normalizeAppUrl(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`);
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    return "https://badreads.vercel.app";
+  }
+
+  if (process.env.VERCEL_URL) {
+    return normalizeAppUrl(`https://${process.env.VERCEL_URL}`);
+  }
+
+  return "http://localhost:3000";
+}
+
+const authUrl = getCanonicalAuthUrl();
+
+function toCanonicalUrl(rawUrl: string, canonicalBase: string): string {
+  try {
+    const parsed = new URL(rawUrl);
+    const base = new URL(canonicalBase);
+    parsed.protocol = base.protocol;
+    parsed.host = base.host;
+    parsed.port = base.port;
+    return parsed.toString();
+  } catch {
+    return rawUrl;
+  }
+}
 
 async function sendMagicLink({ email, url, token }: { email: string; url: string; token?: string }) {
   const normalizedEmail = email.trim().toLowerCase();
   const isDev = process.env.NODE_ENV !== "production";
   const allowDevBypass = isDev && (isBypassEmail(normalizedEmail) || !resend);
+  const destinationUrl = toCanonicalUrl(url, authUrl);
 
   if (allowDevBypass) {
-    setLatestDevMagicLink(normalizedEmail, url, token);
+    setLatestDevMagicLink(normalizedEmail, destinationUrl, token);
     // eslint-disable-next-line no-console
     console.info("\n========================================================");
     // eslint-disable-next-line no-console
     console.info(`[Badreads Dev Auth] Magic link generated for ${email}:`);
     // eslint-disable-next-line no-console
-    console.info(`  --> ${url}`);
+    console.info(`  --> ${destinationUrl}`);
     // eslint-disable-next-line no-console
     console.info("========================================================\n");
     return;
@@ -85,7 +121,7 @@ async function sendMagicLink({ email, url, token }: { email: string; url: string
       from,
       to: [email],
       subject: "Your Badreads door is open",
-      html: `<p>One click and you can tell the truth about that book.</p><p><a href="${url}">Enter Badreads</a></p><p>This link expires in five minutes.</p>`,
+      html: `<p>One click and you can tell the truth about that book.</p><p><a href="${destinationUrl}">Enter Badreads</a></p><p>This link expires in five minutes.</p>`,
     });
     if (response.error) {
       // eslint-disable-next-line no-console
@@ -105,13 +141,6 @@ const magicLinkPlugin = magicLink({
   expiresIn: 300,
   rateLimit: { window: 60, max: 5 },
 });
-
-const authUrl = normalizeAppUrl(
-  process.env.BETTER_AUTH_URL
-  || process.env.NEXT_PUBLIC_BETTER_AUTH_URL
-  || process.env.NEXT_PUBLIC_SITE_URL
-  || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined),
-);
 
 const trustedOrigins = Array.from(new Set([
   authUrl,
