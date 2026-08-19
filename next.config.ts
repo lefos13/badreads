@@ -4,7 +4,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  allowedDevOrigins: ["127.0.0.1", "localhost"],
+  allowedDevOrigins: ["127.0.0.1", "localhost", "192.168.1.2", "192.168.*", "10.*", "*.local", "eevangelinos-MacBook-Pro.local", "*.loca.lt", "*.trycloudflare.com"],
   outputFileTracingRoot: path.resolve(__dirname),
   /*
    * These headers establish a conservative browser boundary for public pages

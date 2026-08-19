@@ -1,19 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-
-type BarcodeDetectorInstance = {
-  detect: (source: ImageBitmapSource) => Promise<Array<{ rawValue: string; format: string }>>;
-};
-
-declare global {
-  interface Window {
-    BarcodeDetector?: {
-      new (options?: { formats: string[] }): BarcodeDetectorInstance;
-      getSupportedFormats?: () => Promise<string[]>;
-    };
-  }
-}
+import { BarcodeFormat, BrowserMultiFormatReader, DecodeHintType } from "@zxing/library";
 
 export function IsbnScannerModal({
   onScan,
@@ -24,14 +12,26 @@ export function IsbnScannerModal({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const readerRef = useRef<BrowserMultiFormatReader | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [manualIsbn, setManualIsbn] = useState("");
-  const [isScanning, setIsScanning] = useState(true);
 
-  // Stop camera tracks cleanly
+  // Stop camera tracks and decoding cleanly
   function stopCamera() {
+    if (readerRef.current) {
+      try {
+        readerRef.current.reset();
+      } catch {
+        // Ignore reset errors
+      }
+      readerRef.current = null;
+    }
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
+      try {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      } catch {
+        // Ignore track stopping errors
+      }
       streamRef.current = null;
     }
   }
@@ -39,32 +39,47 @@ export function IsbnScannerModal({
   function handleFoundIsbn(rawValue: string) {
     const cleaned = rawValue.replace(/[^0-9Xx]/g, "");
     if (cleaned.length >= 10 && cleaned.length <= 13) {
-      stopCamera();
       if (typeof navigator !== "undefined" && navigator.vibrate) {
         try {
-          navigator.vibrate(100);
+          navigator.vibrate(200);
         } catch {
-          // Ignore
+          // Ignore vibrate errors
         }
       }
+      stopCamera();
       onScan(cleaned);
     }
   }
 
   useEffect(() => {
     let isActive = true;
-    let scanInterval: NodeJS.Timeout | null = null;
 
     async function startCamera() {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         setError("Camera access is not supported on this browser.");
-        setIsScanning(false);
         return;
       }
 
       try {
+        const hints = new Map();
+        hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+          BarcodeFormat.EAN_13,
+          BarcodeFormat.EAN_8,
+          BarcodeFormat.UPC_A,
+          BarcodeFormat.CODE_128,
+          BarcodeFormat.CODE_39,
+          BarcodeFormat.ITF,
+        ]);
+
+        const codeReader = new BrowserMultiFormatReader(hints);
+        readerRef.current = codeReader;
+
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" } },
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
         });
 
         if (!isActive) {
@@ -74,39 +89,28 @@ export function IsbnScannerModal({
 
         streamRef.current = stream;
         if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play();
-        }
-
-        if (window.BarcodeDetector) {
-          const detector = new window.BarcodeDetector({
-            formats: ["ean_13", "ean_8", "upc_a", "code_128"],
-          });
-
-          scanInterval = setInterval(async () => {
-            if (!videoRef.current || videoRef.current.readyState < 2) return;
-            try {
-              const barcodes = await detector.detect(videoRef.current);
-              if (barcodes.length > 0 && barcodes[0].rawValue) {
-                handleFoundIsbn(barcodes[0].rawValue);
+          try {
+            await codeReader.decodeFromStream(stream, videoRef.current, (result) => {
+              if (!isActive) return;
+              if (result && result.getText()) {
+                handleFoundIsbn(result.getText());
               }
-            } catch {
-              // Ignore frame detection errors
-            }
-          }, 250);
-        } else {
-          setError("Native barcode detection is not available in this browser. You can enter the ISBN directly.");
+            });
+          } catch (decodeErr) {
+            if (!isActive) return;
+            const msg = decodeErr instanceof Error ? decodeErr.message : "Scanner error";
+            setError(`Barcode scanner initialisation failed: ${msg}`);
+          }
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : "Camera permission denied.";
         setError(`Unable to access camera: ${message}`);
-        setIsScanning(false);
       }
     }
 
     startCamera();
 
-    // Close modal on Escape
+    // Close modal on Escape key
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
         stopCamera();
@@ -117,7 +121,6 @@ export function IsbnScannerModal({
 
     return () => {
       isActive = false;
-      if (scanInterval) clearInterval(scanInterval);
       stopCamera();
       window.removeEventListener("keydown", handleKeyDown);
     };
@@ -180,11 +183,12 @@ export function IsbnScannerModal({
           </p>
         ) : null}
 
-        <form onSubmit={handleManualSubmit} style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+        <form onSubmit={handleManualSubmit} style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }} suppressHydrationWarning>
           <input
             className="text-input"
             onChange={(e) => setManualIsbn(e.target.value)}
             placeholder="Or type 10 or 13-digit ISBN..."
+            suppressHydrationWarning
             type="text"
             value={manualIsbn}
           />

@@ -17,7 +17,7 @@ export function SearchForm({ initialQuery = "" }: { initialQuery?: string }) {
 
   return (
     <>
-      <form action="/search" className="search-form" method="get">
+      <form action="/search" className="search-form" method="get" suppressHydrationWarning>
         <label className="sr-only" htmlFor="book-search">
           Search books by title, author, or ISBN
         </label>
@@ -28,6 +28,7 @@ export function SearchForm({ initialQuery = "" }: { initialQuery?: string }) {
             name="q"
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Try The Alchemist, Fourth Wing, or scan ISBN..."
+            suppressHydrationWarning
             type="search"
             value={query}
           />

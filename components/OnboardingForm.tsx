@@ -15,15 +15,15 @@ export function OnboardingForm() {
   const [state, action, pending] = useActionState(createProfileAction, initialState);
 
   return (
-    <form action={action} className="roast-form">
+    <form action={action} className="roast-form" suppressHydrationWarning>
       <div className="field">
         <label htmlFor="handle">Public handle</label>
-        <input autoComplete="nickname" className="text-input" id="handle" maxLength={24} minLength={3} name="handle" pattern="[A-Za-z0-9_]+" placeholder="thelastchapter" required />
+        <input autoComplete="nickname" className="text-input" id="handle" maxLength={24} minLength={3} name="handle" pattern="[A-Za-z0-9_]+" placeholder="thelastchapter" required suppressHydrationWarning />
         <span className="field-help">Letters, numbers, and underscores. This is the only name other readers see.</span>
       </div>
       <div className="field">
         <label htmlFor="displayName">Display name</label>
-        <input className="text-input" id="displayName" maxLength={60} name="displayName" placeholder="The Last Chapter" required />
+        <input className="text-input" id="displayName" maxLength={60} name="displayName" placeholder="The Last Chapter" required suppressHydrationWarning />
       </div>
       <div className="field">
         <label htmlFor="bio">One-line bio (optional)</label>

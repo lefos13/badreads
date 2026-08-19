@@ -42,10 +42,10 @@ export function SignInForm({ demoMode, registrationEnabled }: { demoMode: boolea
       <span className="eyebrow mono">Private email / public handle</span>
       <h1>Come say the quiet part.</h1>
       <p className="form-intro">Your email stays private. Your handle gets the byline. Badreads is for sharp criticism of books, not people.</p>
-      <form className="roast-form" onSubmit={handleSubmit}>
+      <form className="roast-form" onSubmit={handleSubmit} suppressHydrationWarning>
         <div className="field">
           <label htmlFor="email">Email address</label>
-          <input autoComplete="email" className="text-input" id="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} />
+          <input autoComplete="email" className="text-input" id="email" onChange={(event) => setEmail(event.target.value)} required suppressHydrationWarning type="email" value={email} />
         </div>
         <button className="button button-primary" disabled={pending || !registrationEnabled} type="submit">{pending ? "Sending…" : registrationEnabled ? "Send me a magic link" : "Registration paused"}</button>
       </form>

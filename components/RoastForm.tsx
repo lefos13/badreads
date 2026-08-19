@@ -85,7 +85,7 @@ export function RoastForm({ bookId, bookTitle }: { bookId: string; bookTitle: st
   }
 
   return (
-    <form action={action} className="roast-form">
+    <form action={action} className="roast-form" suppressHydrationWarning>
       {hasRestored ? (
         <p className="form-success mono text-xs" role="status">
           ✓ Draft restored from your browser session.
@@ -106,6 +106,7 @@ export function RoastForm({ bookId, bookTitle }: { bookId: string; bookTitle: st
           onChange={(e) => setHook(e.target.value)}
           placeholder="A fortune cookie wearing a library costume."
           required
+          suppressHydrationWarning
           value={hook}
         />
         <span className="field-help">10–140 characters. Make us stop scrolling.</span>
