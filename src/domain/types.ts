@@ -16,6 +16,30 @@ export type BookWork = {
   coverTone: "coral" | "acid" | "lavender" | "ink";
   sourceId?: string;
   coverUrl?: string | null;
+  isCommunityAdded?: boolean;
+  createdByUserId?: string;
+  isbn?: string | null;
+};
+
+export type CreateCommunityBookInput = {
+  title: string;
+  authors: string[];
+  isbn: string;
+  firstPublished?: number | null;
+  description?: string;
+  coverTone?: "coral" | "acid" | "lavender" | "ink";
+  coverUrl?: string | null;
+  createdByUserId: string;
+};
+
+export type UpdateCommunityBookInput = {
+  id: string;
+  title: string;
+  authors: string[];
+  firstPublished?: number | null;
+  description?: string;
+  coverTone?: "coral" | "acid" | "lavender" | "ink";
+  coverUrl?: string | null;
 };
 
 export type Profile = {
@@ -44,6 +68,16 @@ export type Roast = {
   bookmarkCount: number;
   status: "PENDING_REVIEW" | "PUBLISHED" | "REJECTED" | "REMOVED";
   source?: "following" | "discovery";
+  sourceLabel?: string | null;
+  sourceUrl?: string | null;
+};
+
+export type TopRoaster = {
+  profile: Profile;
+  roastCount: number;
+  fairCount: number;
+  funnyCount: number;
+  totalReactions: number;
 };
 
 export type ReactionState = {
@@ -100,6 +134,33 @@ export type ModerationAction = {
   note?: string;
   createdAt: string;
 };
+
+/*
+ * Query options are shared by both DomainStore implementations so the memory
+ * store and the Postgres store keep identical, bounded read semantics.
+ */
+export type ListRoastsOptions = {
+  status?: RoastStatus;
+  limit?: number;
+  offset?: number;
+};
+
+export type ListRoastsByAuthorOptions = {
+  status?: RoastStatus;
+  limit?: number;
+};
+
+export type ListFeedOptions = {
+  limit?: number;
+};
+
+export type Bottom100Options = {
+  /* A caller-supplied seed keeps `shuffle` stable for one request instead of
+   * reshuffling on every call. Omit it to keep the previous random order. */
+  seed?: number;
+};
+
+export type BookSummaryMap = Record<string, BookSummary>;
 
 export type Bottom100SortOption = "shuffle" | "badness" | "roasts" | "title";
 

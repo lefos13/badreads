@@ -1,39 +1,47 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import { FollowButton } from "@/components/FollowButton";
 import { RoastCard } from "@/components/RoastCard";
-import { demoProfiles } from "@/src/data/demo";
 import { getDomainStore } from "@/src/domain/repository";
 import { getSession } from "@/src/lib/session";
+import type { ReactionState } from "@/src/domain/types";
+
 type ProfilePageProps = { params: Promise<{ handle: string }> };
 
-export function generateStaticParams() {
-  return demoProfiles.map((profile) => ({ handle: profile.handle }));
-}
+/*
+ * generateMetadata and the page body both need the profile; caching the lookup
+ * per request collapses the two identical queries into one.
+ */
+const loadProfile = cache(async (handle: string) => getDomainStore().getProfileByHandle(handle));
+
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: ProfilePageProps): Promise<Metadata> {
   const { handle } = await params;
-  const profile = await getDomainStore().getProfileByHandle(handle);
+  const profile = await loadProfile(handle);
   return profile ? { title: `@${profile.handle} — Badreads`, description: profile.bio } : {};
 }
 
 export default async function ProfilePage({ params }: ProfilePageProps) {
   const { handle } = await params;
   const store = getDomainStore();
-  const profile = await store.getProfileByHandle(handle);
+  const profile = await loadProfile(handle);
   if (!profile) notFound();
   const session = await getSession();
-  const [allRoasts, books, isFollowingUser] = await Promise.all([
-    store.listRoasts(),
-    store.listBooks(),
+  // Author + status filtering happens in the store rather than scanning every roast.
+  const [roasts, isFollowingUser] = await Promise.all([
+    store.listRoastsByAuthor(profile.id, { status: "PUBLISHED" }),
     session?.user?.id ? store.isFollowing(session.user.id, profile.id) : Promise.resolve(false),
   ]);
-  const roasts = allRoasts.filter((roast) => roast.authorId === profile.id && roast.status === "PUBLISHED");
-  const reactionStates = session?.user?.id
-    ? await store.getUserReactionStates(session.user.id, roasts.map((r) => r.id))
-    : {};
+  const bookIds = Array.from(new Set(roasts.map((r) => r.bookId)));
+  const [books, reactionStates] = await Promise.all([
+    store.getBooksByIds(bookIds),
+    session?.user?.id
+      ? store.getUserReactionStates(session.user.id, roasts.map((r) => r.id))
+      : Promise.resolve<Record<string, ReactionState>>({}),
+  ]);
   const booksById = new Map(books.map((book) => [book.id, book] as const));
   const isSelf = session?.user?.id === profile.id || session?.user?.id === profile.userId;
   return (

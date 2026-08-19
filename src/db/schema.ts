@@ -8,6 +8,7 @@
 import {
   boolean,
   check,
+  index,
   integer,
   jsonb,
   pgEnum,
@@ -123,6 +124,8 @@ export const roasts = pgTable("roast", {
   flawTags: text("flaw_tags").array().notNull(),
   spoiler: boolean("spoiler").notNull().default(false),
   status: roastStatus("status").notNull().default("PENDING_REVIEW"),
+  sourceLabel: text("source_label"),
+  sourceUrl: text("source_url"),
   fairCount: integer("fair_count").notNull().default(0),
   funnyCount: integer("funny_count").notNull().default(0),
   bookmarkCount: integer("bookmark_count").notNull().default(0),
@@ -130,6 +133,12 @@ export const roasts = pgTable("roast", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   onePerBook: uniqueIndex("roast_author_book_idx").on(table.authorProfileId, table.bookWorkId),
+  /* Composite indexes back the three ranked reads: the feed and moderation
+   * queue scan by status then recency, book pages and Bottom 100 group by
+   * work, and profile pages filter one author's roasts. */
+  statusCreatedAt: index("roast_status_created_at_idx").on(table.status, table.createdAt),
+  bookStatus: index("roast_book_status_idx").on(table.bookWorkId, table.status),
+  authorStatus: index("roast_author_status_idx").on(table.authorProfileId, table.status),
   ratingRange: check("roast_rating_range", sql`${table.rating} between 1 and 5`),
 }));
 

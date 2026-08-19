@@ -1,13 +1,30 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { IsbnScannerModal } from "./IsbnScannerModal";
+import { useRef, useState } from "react";
+
+// The scanner pulls in @zxing/library (~356 KB min). Keep it out of the
+// /search entry bundle and only fetch the chunk when the user shows intent.
+const loadIsbnScannerModal = () =>
+  import("./IsbnScannerModal").then((m) => m.IsbnScannerModal);
+
+const IsbnScannerModal = dynamic(loadIsbnScannerModal, { ssr: false });
 
 export function SearchForm({ initialQuery = "" }: { initialQuery?: string }) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const hasPreloadedScanner = useRef(false);
+
+  function preloadScanner() {
+    if (hasPreloadedScanner.current) return;
+    hasPreloadedScanner.current = true;
+    void loadIsbnScannerModal().catch(() => {
+      // Preload is best-effort; the real render path surfaces any failure.
+      hasPreloadedScanner.current = false;
+    });
+  }
 
   function handleScan(scannedIsbn: string) {
     setIsScannerOpen(false);
@@ -36,6 +53,8 @@ export function SearchForm({ initialQuery = "" }: { initialQuery?: string }) {
             aria-label="Scan book ISBN barcode with camera"
             className="search-camera-btn"
             onClick={() => setIsScannerOpen(true)}
+            onFocus={preloadScanner}
+            onPointerEnter={preloadScanner}
             title="Scan book barcode with camera"
             type="button"
           >

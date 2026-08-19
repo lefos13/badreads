@@ -2,7 +2,7 @@ import { ModerationAuditLog } from "@/components/ModerationAuditLog";
 import { ModerationQueue } from "@/components/ModerationQueue";
 import { ReportQueue } from "@/components/ReportQueue";
 import { getDomainStore } from "@/src/domain/repository";
-import type { ReportWithContext } from "@/src/domain/types";
+import type { ReportWithContext, Roast } from "@/src/domain/types";
 import { hasModeratorAccess } from "@/src/lib/authorization";
 
 export const dynamic = "force-dynamic";
@@ -12,16 +12,23 @@ export default async function ModerationPage() {
     return <main className="page-width section"><div className="empty-state"><h1>Moderator access required.</h1><p>This queue is private to the founder and approved moderators.</p></div></main>;
   }
   const store = getDomainStore();
-  const [allRoasts, allReports, books, auditActions] = await Promise.all([
-    store.listRoasts(),
+  /* The queue only needs pending roasts, so the status filter runs in the
+   * query rather than over every roast in the table. */
+  const [pending, allReports, auditActions] = await Promise.all([
+    store.listRoasts({ status: "PENDING_REVIEW" }),
     store.listReports(),
-    store.listBooks(),
     store.listModerationActions(),
   ]);
-  const pending = allRoasts.filter((roast) => roast.status === "PENDING_REVIEW");
   const openReports = allReports.filter((report) => report.status === "OPEN");
+  /* Reports can point at roasts of any status, so those specific rows are
+   * fetched by id instead of scanning the whole roast table. */
+  const reportedRoastIds = [...new Set(openReports.map((report) => report.roastId))];
+  const reportedRoasts = (await Promise.all(reportedRoastIds.map((roastId) => store.getRoast(roastId))))
+    .filter((roast): roast is Roast => roast !== undefined);
+  const roastsById = new Map(reportedRoasts.map((r) => [r.id, r]));
+  /* Only the books referenced by those roasts are loaded, never the full catalog. */
+  const books = await store.getBooksByIds([...new Set(reportedRoasts.map((roast) => roast.bookId))]);
   const booksById = new Map(books.map((b) => [b.id, b]));
-  const roastsById = new Map(allRoasts.map((r) => [r.id, r]));
 
   const hydratedReports: ReportWithContext[] = openReports.map((report) => {
     const roast = roastsById.get(report.roastId);

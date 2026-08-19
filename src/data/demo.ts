@@ -21,6 +21,13 @@ const baseProfiles: Profile[] = [
     displayName: "Jules (in parentheses)",
     bio: "The ending was a personal attack.",
   },
+  {
+    id: "profile-lefteris",
+    userId: "seed-user-lefteris",
+    handle: "lefteris",
+    displayName: "Lefteris Evagelinos",
+    bio: "Founder & reviewer. Reading the quiet part out loud.",
+  },
 ];
 
 const seedProfiles: Profile[] = (bottom100Seed.profiles as Array<{
@@ -86,6 +93,19 @@ const baseBooks: BookWork[] = [
     coverTone: "ink",
     sourceId: "OL49634116W",
     coverUrl: "https://covers.openlibrary.org/b/olid/OL49634116W-M.jpg",
+  },
+  {
+    id: "4ec9ce1d-11a5-4b6e-b063-bd857164a720",
+    slug: "το-πεπρωμένο-του-ραθ-community-9789606072598",
+    title: "Το πεπρωμένο του Ραθ",
+    authors: ["Λευτέρης Ευαγγελινός"],
+    firstPublished: 2021,
+    description: "Σε έναν άλλο κόσμο, σε μία άλλη ήπειρο, με μία ξεχασμένη ιστορία, η ανθρωπότητα ακμάζει ειρηνικά. Μετά την Άνοδο του Ανθρώπου και το μεγάλο τσάκισμα των ηπείρων, πριν χίλια χρόνια, η γνώση για την αρχαιότητα έχει πλέον χαθεί.",
+    coverTone: "coral",
+    sourceId: "community-9789606072598",
+    coverUrl: "https://m.media-amazon.com/images/S/compressed.photo.goodreads.com/books/1640089171i/59902598.jpg",
+    isbn: "9789606072598",
+    isCommunityAdded: true,
   },
 ];
 
@@ -207,6 +227,8 @@ const seedRoasts: Roast[] = (bottom100Seed.roasts as Array<{
   funnyCount: number;
   bookmarkCount: number;
   status: "PUBLISHED";
+  sourceLabel?: string | null;
+  sourceUrl?: string | null;
   createdAt: string;
   updatedAt: string;
 }>).map((r) => {
@@ -225,6 +247,8 @@ const seedRoasts: Roast[] = (bottom100Seed.roasts as Array<{
     funnyCount: r.funnyCount,
     bookmarkCount: r.bookmarkCount,
     status: r.status,
+    sourceLabel: r.sourceLabel ?? null,
+    sourceUrl: r.sourceUrl ?? null,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   };

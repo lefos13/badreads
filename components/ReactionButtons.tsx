@@ -2,10 +2,18 @@
 
 import { useState, useTransition } from "react";
 import { setBookmarkAction, setReactionAction } from "@/app/actions";
-import type { ReactionState, Roast } from "@/src/domain/types";
+import type { ReactionState } from "@/src/domain/types";
 
-export function ReactionButtons({ roast, initialState }: { roast: Roast; initialState?: ReactionState }) {
-  const [counts, setCounts] = useState({ fair: roast.fairCount, funny: roast.funnyCount, bookmark: roast.bookmarkCount });
+type ReactionButtonsProps = {
+  roastId: string;
+  fairCount: number;
+  funnyCount: number;
+  bookmarkCount: number;
+  initialState?: ReactionState;
+};
+
+export function ReactionButtons({ roastId, fairCount, funnyCount, bookmarkCount, initialState }: ReactionButtonsProps) {
+  const [counts, setCounts] = useState({ fair: fairCount, funny: funnyCount, bookmark: bookmarkCount });
   const [active, setActive] = useState<ReactionState>(initialState ?? { fair: false, funny: false, bookmarked: false });
   const [pending, startTransition] = useTransition();
 
@@ -15,7 +23,7 @@ export function ReactionButtons({ roast, initialState }: { roast: Roast; initial
     setActive((current) => ({ ...current, [key]: nextActive }));
     setCounts((current) => ({ ...current, [key]: current[key] + (nextActive ? 1 : -1) }));
     startTransition(async () => {
-      const result = await setReactionAction({ roastId: roast.id, kind, active: nextActive });
+      const result = await setReactionAction({ roastId, kind, active: nextActive });
       if (!result.ok) {
         setActive((current) => ({ ...current, [key]: !nextActive }));
         setCounts((current) => ({ ...current, [key]: current[key] + (nextActive ? -1 : 1) }));
@@ -28,7 +36,7 @@ export function ReactionButtons({ roast, initialState }: { roast: Roast; initial
     setActive((current) => ({ ...current, bookmarked: nextActive }));
     setCounts((current) => ({ ...current, bookmark: current.bookmark + (nextActive ? 1 : -1) }));
     startTransition(async () => {
-      const result = await setBookmarkAction({ roastId: roast.id, active: nextActive });
+      const result = await setBookmarkAction({ roastId, active: nextActive });
       if (!result.ok) {
         setActive((current) => ({ ...current, bookmarked: !nextActive }));
         setCounts((current) => ({ ...current, bookmark: current.bookmark + (nextActive ? -1 : 1) }));

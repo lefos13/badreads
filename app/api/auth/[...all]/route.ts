@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   if (isMagicLinkIssue && isDemoMode()) {
     return Response.json({ ok: false, error: { code: "FORBIDDEN", message: "Magic-link sign-in is disabled in local demo mode. Use the demo access button." } }, { status: 403 });
   }
-  if (isMagicLinkIssue && !hasEmailDeliveryConfig()) {
+  if (isMagicLinkIssue && !hasEmailDeliveryConfig() && process.env.NODE_ENV === "production") {
     return Response.json({ ok: false, error: { code: "SERVICE_UNAVAILABLE", message: `Magic-link delivery is not configured (${getAuthRuntimeMode()} mode).` } }, { status: 503 });
   }
   return handlers.POST(request);

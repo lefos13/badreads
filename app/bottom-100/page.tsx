@@ -98,7 +98,7 @@ export default async function Bottom100Page({ searchParams }: Bottom100PageProps
                     alt={`Cover of ${item.book.title}`}
                     className="book-cover-image"
                     fill
-                    sizes="(max-width: 768px) 100vw, 150px"
+                    sizes="(max-width: 520px) 88px, 120px"
                     src={item.book.coverUrl}
                   />
                 ) : null}
@@ -129,9 +129,28 @@ export default async function Bottom100Page({ searchParams }: Bottom100PageProps
                     {item.topRoasts.map((roast) => (
                       <div className="receipt-snippet" key={roast.id}>
                         <div className="receipt-topline">
-                          <Link className="roast-author" href={`/u/${roast.author.handle}`}>
-                            @{roast.author.handle}
-                          </Link>
+                          <div className="receipt-author-group">
+                            <Link className="roast-author" href={`/u/${roast.author.handle}`}>
+                              @{roast.author.handle}
+                            </Link>
+                            {roast.sourceLabel ? (
+                              <span className="roast-source-badge mono" title={`Imported from ${roast.sourceLabel}`}>
+                                <span className="source-dot" aria-hidden="true" />
+                                {roast.sourceUrl ? (
+                                  <a
+                                    className="roast-source-link"
+                                    href={roast.sourceUrl}
+                                    rel="noopener noreferrer"
+                                    target="_blank"
+                                  >
+                                    {roast.sourceLabel} ↗
+                                  </a>
+                                ) : (
+                                  <span>{roast.sourceLabel}</span>
+                                )}
+                              </span>
+                            ) : null}
+                          </div>
                           <span className="badness-stars">{"★".repeat(roast.rating)}</span>
                         </div>
                         <p className="receipt-hook"><strong>&ldquo;{roast.hook}&rdquo;</strong></p>

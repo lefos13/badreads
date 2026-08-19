@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { BADNESS_LABELS } from "@/src/domain/core";
 import { getDomainStore } from "@/src/domain/repository";
 import type { ReactionState } from "@/src/domain/types";
@@ -14,9 +15,13 @@ type RoastPageProps = { params: Promise<{ id: string }> };
 
 export const dynamic = "force-dynamic";
 
+/* One roast lookup per request: generateMetadata and the page body share this
+ * memoized loader instead of issuing the same query twice. */
+const loadRoast = cache(async (id: string) => getDomainStore().getRoast(id));
+
 export async function generateMetadata({ params }: RoastPageProps): Promise<Metadata> {
   const { id } = await params;
-  const roast = await getDomainStore().getRoast(id);
+  const roast = await loadRoast(id);
   if (!roast || roast.status !== "PUBLISHED") return {};
   const ogImageUrl = `/api/og/roast/${roast.id}`;
   return {
@@ -40,15 +45,16 @@ export async function generateMetadata({ params }: RoastPageProps): Promise<Meta
 export default async function RoastPage({ params }: RoastPageProps) {
   const { id } = await params;
   const store = getDomainStore();
-  const roast = await store.getRoast(id);
+  const [roast, session] = await Promise.all([loadRoast(id), getSession()]);
   if (!roast) notFound();
-  const session = await getSession();
-  const [viewerProfile, reactionStates] = await Promise.all([
+  /* The book depends only on the already-resolved roast, so it loads alongside
+   * the viewer profile and reaction states rather than after them. */
+  const [viewerProfile, reactionStates, book] = await Promise.all([
     session ? store.getProfile(session.user.id) : Promise.resolve(undefined),
     session?.user?.id ? store.getUserReactionStates(session.user.id, [roast.id]) : Promise.resolve<Record<string, ReactionState>>({}),
+    store.getBook(roast.bookId),
   ]);
   if (roast.status !== "PUBLISHED" && viewerProfile?.id !== roast.authorId && !(await hasModeratorAccess())) notFound();
-  const book = await store.getBook(roast.bookId);
   if (!book) notFound();
 
   return (
@@ -56,6 +62,26 @@ export default async function RoastPage({ params }: RoastPageProps) {
       <span className="eyebrow mono">A public record of disappointment</span>
       <h1>{roast.hook}</h1>
       <p className="book-meta"><Link href={`/u/${roast.author.handle}`}>@{roast.author.handle}</Link> on <Link href={`/books/${book.slug}`}>{book.title}</Link></p>
+      {roast.sourceLabel ? (
+        <div className="roast-source-banner">
+          <span className="mono eyebrow">Imported Web Review</span>
+          <p>
+            Original source:{" "}
+            {roast.sourceUrl ? (
+              <a
+                className="roast-source-link"
+                href={roast.sourceUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <strong>{roast.sourceLabel}</strong> ↗
+              </a>
+            ) : (
+              <strong>{roast.sourceLabel}</strong>
+            )}
+          </p>
+        </div>
+      ) : null}
       {roast.status !== "PUBLISHED" ? <p className="form-success" role="status">This roast is {roast.status === "PENDING_REVIEW" ? "waiting for moderator review" : roast.status.toLowerCase()}.</p> : null}
       <div className="stat-row">
         <div className="stat"><strong className="badness-stars">{"★".repeat(roast.rating)}{"☆".repeat(5 - roast.rating)}</strong><span>{BADNESS_LABELS[roast.rating]}</span></div>
@@ -66,7 +92,13 @@ export default async function RoastPage({ params }: RoastPageProps) {
       <div className="tag-grid tag-list">{roast.flawTags.map((tag) => <span className="tag-option selected" key={tag}>{tag.replaceAll("_", " ")}</span>)}</div>
       {roast.status === "PUBLISHED" ? (
         <div className="roast-actions-row">
-          <ReactionButtons initialState={reactionStates[roast.id]} roast={roast} />
+          <ReactionButtons
+            bookmarkCount={roast.bookmarkCount}
+            fairCount={roast.fairCount}
+            funnyCount={roast.funnyCount}
+            initialState={reactionStates[roast.id]}
+            roastId={roast.id}
+          />
           <ShareReceiptButton
             authorHandle={roast.author.handle}
             bookTitle={book.title}

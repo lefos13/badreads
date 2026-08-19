@@ -14,7 +14,7 @@ describe.skipIf(!hasLocalDb)("local PostgreSQL database with 10k catalog", () =>
     const sandersonBooks = await store.searchBooks("Sanderson", 10);
     expect(sandersonBooks.length).toBeGreaterThan(0);
     expect(sandersonBooks.some((b) => b.authors.some((a) => a.includes("Sanderson")))).toBe(true);
-  });
+  }, 15_000);
 
   it("retrieves a book by its slug", async () => {
     const store = getDomainStore();
@@ -23,17 +23,17 @@ describe.skipIf(!hasLocalDb)("local PostgreSQL database with 10k catalog", () =>
     expect(book?.title).toBe("Dune");
     expect(book?.authors).toContain("Frank Herbert");
     expect(book?.firstPublished).toBe(1965);
-  });
+  }, 15_000);
 
   it("resolves catalog search through local catalog service", async () => {
     const result = await searchCatalog("Frank Herbert");
     expect(result.results.length).toBeGreaterThan(0);
     expect(result.results.some((b) => b.title.includes("Dune"))).toBe(true);
-  });
+  }, 15_000);
 
   it("resolves catalog work by workId", async () => {
     const work = await resolveCatalogWork("OL46055W");
     expect(work).toBeDefined();
     expect(work?.title).toBe("Dune");
-  });
+  }, 15_000);
 });

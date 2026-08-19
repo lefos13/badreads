@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "@/src/db";
 import {
   bookIdentifiers,
@@ -22,47 +22,55 @@ async function seedDatabase(database: NonNullable<typeof db>) {
 
   /* Seeded readers are trusted launch identities, so their Better Auth
    * verification state is represented by the same boolean as live users. */
-  await database
-    .insert(users)
-    .values(
-      launchSeed.users.map((user) => ({
-        ...user,
+  for (const seedUser of launchSeed.users) {
+    const existing = await database.select().from(users).where(eq(users.email, seedUser.email)).limit(1);
+    const role = (seedUser.email === "lefterisevagelinos1996@gmail.com" ? "ADMIN" : "MEMBER") as "ADMIN" | "MEMBER";
+    if (existing.length > 0) {
+      await database
+        .update(users)
+        .set({
+          role,
+          emailVerified: true,
+          updatedAt: seedDate,
+        })
+        .where(eq(users.id, existing[0].id));
+    } else {
+      await database.insert(users).values({
+        id: seedUser.id,
+        name: seedUser.name,
+        email: seedUser.email,
+        role,
         emailVerified: true,
         createdAt: seedDate,
         updatedAt: seedDate,
-      })),
-    )
-    .onConflictDoUpdate({
-      target: users.id,
-      set: {
-        name: sql.raw("excluded.name"),
-        email: sql.raw("excluded.email"),
-        emailVerified: sql.raw("excluded.email_verified"),
-        updatedAt: seedDate,
-      },
-    });
+      });
+    }
+  }
 
-  await database
-    .insert(profiles)
-    .values(
-      launchSeed.profiles.map((profile) => ({
-        ...profile,
+  for (const seedProfile of launchSeed.profiles) {
+    const seedUser = launchSeed.users.find((u) => u.id === seedProfile.userId);
+    let targetUserId: string = seedProfile.userId;
+    if (seedUser) {
+      const [matchedUser] = await database.select().from(users).where(eq(users.email, seedUser.email)).limit(1);
+      if (matchedUser) {
+        targetUserId = matchedUser.id;
+      }
+    }
+
+    const existingProfile = await database.select().from(profiles).where(eq(profiles.userId, targetUserId)).limit(1);
+    if (existingProfile.length === 0) {
+      await database.insert(profiles).values({
+        id: seedProfile.id,
+        userId: targetUserId,
+        handle: seedProfile.handle,
+        displayName: seedProfile.displayName,
+        bio: seedProfile.bio,
         ageConfirmedAt: seedDate,
         createdAt: seedDate,
         updatedAt: seedDate,
-      })),
-    )
-    .onConflictDoUpdate({
-      target: profiles.id,
-      set: {
-        userId: sql.raw("excluded.user_id"),
-        handle: sql.raw("excluded.handle"),
-        displayName: sql.raw("excluded.display_name"),
-        bio: sql.raw("excluded.bio"),
-        ageConfirmedAt: sql.raw("excluded.age_confirmed_at"),
-        updatedAt: seedDate,
-      },
-    });
+      }).onConflictDoNothing();
+    }
+  }
 
   await database
     .insert(bookWorks)

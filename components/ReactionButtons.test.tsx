@@ -1,34 +1,22 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ReactionButtons } from "./ReactionButtons";
-import type { Roast } from "@/src/domain/types";
 
 vi.mock("@/app/actions", () => ({
   setReactionAction: vi.fn().mockResolvedValue({ ok: true, data: {} }),
   setBookmarkAction: vi.fn().mockResolvedValue({ ok: true, data: {} }),
 }));
 
-const mockRoast: Roast = {
-  id: "roast-123",
-  bookId: "book-1",
-  authorId: "author-1",
-  author: { id: "author-1", handle: "critic", displayName: "Critic", bio: "" },
-  hook: "A hollow shell of a novel.",
-  body: "The prose is wooden and the plot goes nowhere for three hundred pages.",
-  rating: 4,
-  flawTags: ["PROSE", "PLOT"],
-  spoiler: false,
-  createdAt: "2026-08-18T00:00:00.000Z",
-  updatedAt: "2026-08-18T00:00:00.000Z",
+const baseProps = {
+  roastId: "roast-123",
   fairCount: 5,
   funnyCount: 2,
   bookmarkCount: 1,
-  status: "PUBLISHED",
 };
 
 describe("ReactionButtons", () => {
   it("renders default counts and inactive state when no initialState is passed", () => {
-    render(<ReactionButtons roast={mockRoast} />);
+    render(<ReactionButtons {...baseProps} />);
 
     const fairBtn = screen.getByRole("button", { name: /Fair 5/ });
     const funnyBtn = screen.getByRole("button", { name: /Funny 2/ });
@@ -39,11 +27,19 @@ describe("ReactionButtons", () => {
     expect(saveBtn).toHaveAttribute("aria-pressed", "false");
   });
 
+  it("keeps the exact button glyphs and labels", () => {
+    render(<ReactionButtons {...baseProps} />);
+
+    expect(screen.getByRole("button", { name: "◒ Fair 5" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "✦ Funny 2" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "◇ Save 1" })).toBeVisible();
+  });
+
   it("hydrates with passed initialState (e.g. user already reacted Fair and Saved)", () => {
     render(
       <ReactionButtons
+        {...baseProps}
         initialState={{ fair: true, funny: false, bookmarked: true }}
-        roast={mockRoast}
       />,
     );
 
@@ -59,7 +55,7 @@ describe("ReactionButtons", () => {
   });
 
   it("optimistically increments count and flips active state on click", () => {
-    render(<ReactionButtons roast={mockRoast} />);
+    render(<ReactionButtons {...baseProps} />);
 
     const funnyBtn = screen.getByRole("button", { name: /Funny 2/ });
     fireEvent.click(funnyBtn);
@@ -68,5 +64,29 @@ describe("ReactionButtons", () => {
       "aria-pressed",
       "true",
     );
+  });
+
+  it("optimistically toggles the bookmark count", () => {
+    render(<ReactionButtons {...baseProps} initialState={{ fair: false, funny: false, bookmarked: true }} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Save 1/ }));
+
+    expect(screen.getByRole("button", { name: /Save 0/ })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+  });
+
+  it("forwards the roast id to the reaction action", async () => {
+    const { setReactionAction } = await import("@/app/actions");
+    render(<ReactionButtons {...baseProps} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Fair 5/ }));
+
+    expect(setReactionAction).toHaveBeenCalledWith({
+      roastId: "roast-123",
+      kind: "FAIR",
+      active: true,
+    });
   });
 });

@@ -13,6 +13,10 @@ export function IsbnScannerModal({
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const readerRef = useRef<BrowserMultiFormatReader | null>(null);
+  const onScanRef = useRef(onScan);
+  onScanRef.current = onScan;
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   const [error, setError] = useState<string | null>(null);
   const [manualIsbn, setManualIsbn] = useState("");
 
@@ -47,7 +51,7 @@ export function IsbnScannerModal({
         }
       }
       stopCamera();
-      onScan(cleaned);
+      onScanRef.current(cleaned);
     }
   }
 
@@ -114,7 +118,7 @@ export function IsbnScannerModal({
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
         stopCamera();
-        onClose();
+        onCloseRef.current();
       }
     }
     window.addEventListener("keydown", handleKeyDown);

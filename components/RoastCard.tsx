@@ -15,7 +15,26 @@ export function RoastCard({ roast, bookTitle, bookSlug, reactionState }: RoastCa
   return (
     <article className="roast-card">
       <div className="roast-topline">
-        <Link className="roast-author" href={`/u/${roast.author.handle}`}>@{roast.author.handle}</Link>
+        <div className="roast-author-group">
+          <Link className="roast-author" href={`/u/${roast.author.handle}`}>@{roast.author.handle}</Link>
+          {roast.sourceLabel ? (
+            <span className="roast-source-badge mono" title={`Imported from ${roast.sourceLabel}`}>
+              <span className="source-dot" aria-hidden="true" />
+              {roast.sourceUrl ? (
+                <a
+                  className="roast-source-link"
+                  href={roast.sourceUrl}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  {roast.sourceLabel} ↗
+                </a>
+              ) : (
+                <span>{roast.sourceLabel}</span>
+              )}
+            </span>
+          ) : null}
+        </div>
         <span className="roast-time mono">{new Date(roast.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
       </div>
       <Link href={`/roasts/${roast.id}`}><h3>{roast.hook}</h3></Link>
@@ -27,7 +46,13 @@ export function RoastCard({ roast, bookTitle, bookSlug, reactionState }: RoastCa
         <span className="mono"> {BADNESS_LABELS[roast.rating]}</span>
       </div>
       <div className="roast-actions-row">
-        <ReactionButtons initialState={reactionState} roast={roast} />
+        <ReactionButtons
+          bookmarkCount={roast.bookmarkCount}
+          fairCount={roast.fairCount}
+          funnyCount={roast.funnyCount}
+          initialState={reactionState}
+          roastId={roast.id}
+        />
         <ShareReceiptButton
           authorHandle={roast.author.handle}
           bookTitle={bookTitle}

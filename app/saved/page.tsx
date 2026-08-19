@@ -17,15 +17,15 @@ export default async function SavedPage() {
   if (!session) redirect("/sign-in");
 
   const store = getDomainStore();
-  const [roasts, books] = await Promise.all([
-    store.listBookmarkedRoasts(session.user.id),
-    store.listBooks(),
+  const roasts = await store.listBookmarkedRoasts(session.user.id);
+  const bookIds = Array.from(new Set(roasts.map((r) => r.bookId)));
+  const [books, reactionStates] = await Promise.all([
+    store.getBooksByIds(bookIds),
+    store.getUserReactionStates(
+      session.user.id,
+      roasts.map((r) => r.id),
+    ),
   ]);
-
-  const reactionStates = await store.getUserReactionStates(
-    session.user.id,
-    roasts.map((r) => r.id),
-  );
   const booksById = new Map(books.map((book) => [book.id, book] as const));
 
   return (

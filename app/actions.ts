@@ -1,12 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { z } from "zod";
 import { FLAW_TAGS, profileDraftSchema, validateRoastDraft, type ReactionKind } from "@/src/domain/core";
 import { getDomainStore } from "@/src/domain/repository";
 import { getSession } from "@/src/lib/session";
-import { hasModeratorAccess } from "@/src/lib/authorization";
+import { canDeleteCommunityBook, canEditCommunityBook, hasModeratorAccess } from "@/src/lib/authorization";
+import { checkIsbnAvailability } from "@/src/catalog/service";
 import { consumeRateLimit } from "@/src/lib/rate-limit";
+import { auth, getLatestDevMagicLink } from "@/src/lib/auth";
 
 export type RoastActionState = {
   ok: boolean;
@@ -61,7 +64,7 @@ export async function submitRoastAction(_previous: RoastActionState, formData: F
 
   revalidatePath("/");
   revalidatePath("/feed");
-  const book = (await store.listBooks()).find((candidate) => candidate.id === input.bookId);
+  const book = await store.getBook(input.bookId);
   revalidatePath(`/books/${book?.slug ?? ""}`);
   return {
     ok: true,
@@ -187,4 +190,295 @@ export async function deleteAccountAction(_previous: AccountActionState): Promis
   revalidatePath("/");
   revalidatePath("/feed");
   return { ok: true, message: "Your public profile and roasts have been deleted from this workspace." };
+}
+
+export type CommunityBookActionState = {
+  ok: boolean;
+  message: string;
+  bookSlug?: string;
+  providerWorkId?: string;
+};
+
+const MAX_COVER_DATA_BYTES = 100 * 1024; // 100KB max for stored cover data
+
+async function processUploadedCover(coverDataUrlOrFile: unknown): Promise<string | null> {
+  if (!coverDataUrlOrFile) {
+    return null;
+  }
+
+  // Case 1: String (e.g. downscaled base64 data URL from client canvas)
+  if (typeof coverDataUrlOrFile === "string") {
+    const trimmed = coverDataUrlOrFile.trim();
+    if (!trimmed) return null;
+    const match = trimmed.match(/^data:(image\/(?:jpeg|png|webp|avif|gif));base64,(.+)$/i);
+    if (!match) {
+      throw new Error("Invalid cover image format. Only WebP, JPEG, and PNG images are supported.");
+    }
+    const base64Data = match[2];
+    const approxBinaryBytes = Math.ceil((base64Data.length * 3) / 4);
+    if (approxBinaryBytes > MAX_COVER_DATA_BYTES) {
+      throw new Error("Cover image is too large (max 100KB after compression).");
+    }
+    return trimmed;
+  }
+
+  // Case 2: File object (e.g. direct upload fallback)
+  if (typeof coverDataUrlOrFile === "object" && coverDataUrlOrFile instanceof File) {
+    if (coverDataUrlOrFile.size === 0) {
+      return null;
+    }
+    if (coverDataUrlOrFile.size > MAX_COVER_DATA_BYTES) {
+      throw new Error("Cover image must be 100KB or smaller.");
+    }
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"];
+    if (!allowedTypes.includes(coverDataUrlOrFile.type)) {
+      throw new Error("Cover image must be a JPEG, PNG, WebP, or GIF file.");
+    }
+    const arrayBuffer = await coverDataUrlOrFile.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString("base64");
+    return `data:${coverDataUrlOrFile.type};base64,${base64}`;
+  }
+
+  return null;
+}
+
+export async function createCommunityBookAction(
+  _previous: CommunityBookActionState,
+  formData: FormData,
+): Promise<CommunityBookActionState> {
+  const userId = await viewerId();
+  if (!userId) {
+    return { ok: false, message: "Sign in before adding a book to Badreads." };
+  }
+
+  const rateLimit = await consumeRateLimit(`create-book:${userId}`, 20, 60 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    return { ok: false, message: "You have reached the hourly book creation limit." };
+  }
+
+  const rawTitle = String(formData.get("title") ?? "").trim();
+  const rawAuthors = String(formData.get("authors") ?? "")
+    .split(/[,;\n]+/)
+    .map((a) => a.trim())
+    .filter(Boolean);
+  const rawIsbn = String(formData.get("isbn") ?? "").trim();
+  const rawYear = String(formData.get("firstPublished") ?? "").trim();
+  const firstPublished = rawYear ? Number.parseInt(rawYear, 10) : null;
+  const rawDescription = String(formData.get("description") ?? "").trim();
+  const rawCoverTone = String(formData.get("coverTone") ?? "acid");
+  const coverTone = rawCoverTone === "coral" || rawCoverTone === "acid" || rawCoverTone === "lavender" || rawCoverTone === "ink"
+    ? rawCoverTone
+    : "acid";
+
+  let coverUrl: string | null = null;
+  try {
+    const coverPayload = formData.get("coverDataUrl") || formData.get("coverImage");
+    coverUrl = await processUploadedCover(coverPayload);
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Invalid cover image file." };
+  }
+
+  if (!rawTitle) {
+    return { ok: false, message: "Title is required." };
+  }
+  if (rawAuthors.length === 0) {
+    return { ok: false, message: "Add at least one author." };
+  }
+
+  const availability = await checkIsbnAvailability(rawIsbn);
+  if (availability.status === "INVALID_ISBN") {
+    return { ok: false, message: availability.message };
+  }
+  if (availability.status === "LOCAL_EXISTS") {
+    return {
+      ok: false,
+      message: `A book with ISBN ${availability.isbn} is already in Badreads ("${availability.book.title}").`,
+      bookSlug: availability.book.slug,
+    };
+  }
+  if (availability.status === "OPEN_LIBRARY_EXISTS") {
+    return {
+      ok: false,
+      message: `This book was found in Open Library ("${availability.result.title}"). Import it directly instead.`,
+      providerWorkId: availability.result.providerWorkId,
+      bookSlug: availability.result.slug,
+    };
+  }
+
+  const store = getDomainStore();
+  const result = await store.createCommunityBook({
+    title: rawTitle,
+    authors: rawAuthors,
+    isbn: availability.isbn,
+    firstPublished: Number.isFinite(firstPublished) ? firstPublished : null,
+    description: rawDescription,
+    coverTone,
+    coverUrl,
+    createdByUserId: userId,
+  });
+
+  if (!result.ok) {
+    return { ok: false, message: result.message };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/search");
+  revalidatePath(`/books/${result.data.slug}`);
+  return {
+    ok: true,
+    message: "Community book created successfully!",
+    bookSlug: result.data.slug,
+  };
+}
+
+export async function updateCommunityBookAction(
+  _previous: CommunityBookActionState,
+  formData: FormData,
+): Promise<CommunityBookActionState> {
+  const userId = await viewerId();
+  if (!userId) {
+    return { ok: false, message: "Sign in before editing book details." };
+  }
+
+  const bookId = String(formData.get("bookId") ?? "").trim();
+  if (!bookId) {
+    return { ok: false, message: "Book ID is required." };
+  }
+
+  const store = getDomainStore();
+  const book = await store.getBook(bookId);
+  if (!book) {
+    return { ok: false, message: "Book not found." };
+  }
+
+  const authorized = await canEditCommunityBook(book);
+  if (!authorized) {
+    return { ok: false, message: "You do not have permission to edit this book." };
+  }
+
+  const rawTitle = String(formData.get("title") ?? "").trim();
+  const rawAuthors = String(formData.get("authors") ?? "")
+    .split(/[,;\n]+/)
+    .map((a) => a.trim())
+    .filter(Boolean);
+  const rawYear = String(formData.get("firstPublished") ?? "").trim();
+  const firstPublished = rawYear ? Number.parseInt(rawYear, 10) : null;
+  const rawDescription = String(formData.get("description") ?? "").trim();
+  const rawCoverTone = String(formData.get("coverTone") ?? book.coverTone);
+  const coverTone = rawCoverTone === "coral" || rawCoverTone === "acid" || rawCoverTone === "lavender" || rawCoverTone === "ink"
+    ? rawCoverTone
+    : book.coverTone;
+
+  let coverUrl: string | null = book.coverUrl ?? null;
+  const coverPayload = formData.get("coverDataUrl") || formData.get("coverImage");
+  const hasCoverPayload =
+    coverPayload &&
+    (typeof coverPayload === "string"
+      ? coverPayload.trim().length > 0
+      : coverPayload instanceof File && coverPayload.size > 0);
+  if (hasCoverPayload) {
+    try {
+      coverUrl = await processUploadedCover(coverPayload);
+    } catch (error) {
+      return { ok: false, message: error instanceof Error ? error.message : "Invalid cover image file." };
+    }
+  }
+
+  const result = await store.updateCommunityBook({
+    id: book.id,
+    title: rawTitle,
+    authors: rawAuthors,
+    firstPublished: Number.isFinite(firstPublished) ? firstPublished : null,
+    description: rawDescription,
+    coverTone,
+    coverUrl,
+  });
+
+  if (!result.ok) {
+    return { ok: false, message: result.message };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/search");
+  revalidatePath(`/books/${book.slug}`);
+  revalidatePath(`/books/${book.slug}/edit`);
+  return {
+    ok: true,
+    message: "Book details updated successfully.",
+    bookSlug: book.slug,
+  };
+}
+
+export async function deleteCommunityBookAction(
+  bookIdInput: string | FormData,
+): Promise<{ ok: boolean; message: string }> {
+  const userId = await viewerId();
+  if (!userId) {
+    return { ok: false, message: "Sign in before deleting community books." };
+  }
+
+  const bookId = typeof bookIdInput === "string"
+    ? bookIdInput.trim()
+    : String(bookIdInput.get("bookId") ?? "").trim();
+
+  if (!bookId) {
+    return { ok: false, message: "Book ID is required." };
+  }
+
+  const store = getDomainStore();
+  const book = await store.getBook(bookId);
+  if (!book) {
+    return { ok: false, message: "Book not found." };
+  }
+
+  const authorized = await canDeleteCommunityBook(book);
+  if (!authorized) {
+    return { ok: false, message: "You do not have permission to delete this book." };
+  }
+
+  const result = await store.deleteCommunityBook(book.id);
+  if (!result.ok) {
+    return { ok: false, message: result.message };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/feed");
+  revalidatePath("/community");
+  revalidatePath("/search");
+  revalidatePath("/bottom-100");
+  revalidatePath(`/books/${book.slug}`);
+
+  return { ok: true, message: "Community book entry deleted." };
+}
+export async function requestDevBypassMagicLinkAction(email: string = "lefterisevagelinos1996@gmail.com") {
+  if (process.env.NODE_ENV === "production") {
+    return { ok: false, message: "Dev bypass is disabled in production." };
+  }
+
+  try {
+    const targetEmail = email.trim().toLowerCase();
+    let reqHeaders: Headers;
+    try {
+      reqHeaders = await headers();
+    } catch {
+      reqHeaders = new Headers();
+    }
+    await auth.api.signInMagicLink({
+      body: {
+        email: targetEmail,
+        callbackURL: "/write",
+      },
+      headers: reqHeaders,
+    });
+
+    const entry = getLatestDevMagicLink(targetEmail);
+    return {
+      ok: true,
+      url: entry?.url ?? null,
+      message: `Magic link generated for ${targetEmail}.`,
+    };
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : "Failed to generate bypass magic link.";
+    return { ok: false, message: msg };
+  }
 }

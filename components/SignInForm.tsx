@@ -3,12 +3,29 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { authClient } from "@/src/lib/auth-client";
-
+import { requestDevBypassMagicLinkAction } from "@/app/actions";
 export function SignInForm({ demoMode, registrationEnabled }: { demoMode: boolean; registrationEnabled: boolean }) {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  async function handleQuickBypass(targetEmail = "lefterisevagelinos1996@gmail.com") {
+    setError(null);
+    setMessage(null);
+    setPending(true);
+    setEmail(targetEmail);
+    const result = await requestDevBypassMagicLinkAction(targetEmail);
+    setPending(false);
+    if (result.ok && result.url) {
+      setMessage("Bypass magic link generated (Resend bypassed). Entering Badreads…");
+      window.location.href = result.url;
+    } else if (result.ok) {
+      setMessage("Magic link generated. Check your server terminal.");
+    } else {
+      setError(result.message || "Could not generate bypass link.");
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -19,6 +36,21 @@ export function SignInForm({ demoMode, registrationEnabled }: { demoMode: boolea
     setError(null);
     setMessage(null);
     setPending(true);
+
+    if (email.trim().toLowerCase() === "lefterisevagelinos1996@gmail.com") {
+      const result = await requestDevBypassMagicLinkAction(email);
+      setPending(false);
+      if (result.ok && result.url) {
+        setMessage("Bypass magic link generated (Resend bypassed). Entering Badreads…");
+        window.location.href = result.url;
+      } else if (result.ok) {
+        setMessage("Magic link generated. Check your server terminal.");
+      } else {
+        setError(result.message || "Could not generate bypass link.");
+      }
+      return;
+    }
+
     const result = await authClient.signIn.magicLink({ email, callbackURL: "/write" });
     setPending(false);
     if (result.error) setError("We could not send that link. Check the address and try again.");
@@ -47,7 +79,10 @@ export function SignInForm({ demoMode, registrationEnabled }: { demoMode: boolea
           <label htmlFor="email">Email address</label>
           <input autoComplete="email" className="text-input" id="email" onChange={(event) => setEmail(event.target.value)} required suppressHydrationWarning type="email" value={email} />
         </div>
-        <button className="button button-primary" disabled={pending || !registrationEnabled} type="submit">{pending ? "Sending…" : registrationEnabled ? "Send me a magic link" : "Registration paused"}</button>
+        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
+          <button className="button button-primary" disabled={pending || !registrationEnabled} type="submit">{pending ? "Sending…" : registrationEnabled ? "Send me a magic link" : "Registration paused"}</button>
+          <button className="button button-quiet" disabled={pending} onClick={() => handleQuickBypass("lefterisevagelinos1996@gmail.com")} type="button">1-Click Local DB Bypass (Lefteris)</button>
+        </div>
       </form>
       {message ? <p aria-live="polite" className="form-success">{message}</p> : null}
       {error ? <p aria-live="polite" className="form-error">{error}</p> : null}

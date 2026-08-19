@@ -1,8 +1,9 @@
+import { isValidIsbn, normalizeIsbn } from "@/src/domain/core";
 import { getDomainStore } from "@/src/domain/repository";
 import type { BookWork } from "@/src/domain/types";
 import { OpenLibraryProvider, type CatalogResult, type CatalogSearchResult } from "./open-library";
-const COVER_TONES = ["coral", "acid", "lavender", "ink"] as const;
 
+const COVER_TONES = ["coral", "acid", "lavender", "ink"] as const;
 function determineCoverTone(providerWorkId: string): (typeof COVER_TONES)[number] {
   let hash = 0;
   for (let i = 0; i < providerWorkId.length; i++) {
@@ -12,15 +13,15 @@ function determineCoverTone(providerWorkId: string): (typeof COVER_TONES)[number
 }
 
 function slugify(title: string, providerWorkId: string) {
-  const titleSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 70);
+  const titleSlug = title.toLowerCase().replace(/[^\p{L}\p{N}0-9]+/gu, "-").replace(/^-+|-+$/gu, "").slice(0, 70);
   return `${titleSlug || "book"}-${providerWorkId.toLowerCase()}`;
 }
 
 export type EnhancedCatalogResult = CatalogResult & {
   slug?: string;
   localBookId?: string;
+  isCommunityAdded?: boolean;
 };
-
 export type SearchCatalogResult = Omit<CatalogSearchResult, "results"> & {
   results: EnhancedCatalogResult[];
 };
@@ -32,9 +33,10 @@ function mapBookToCatalogResult(book: BookWork): EnhancedCatalogResult {
     authors: book.authors,
     firstPublished: book.firstPublished,
     coverUrl: book.coverUrl ?? null,
-    identifiers: [],
+    identifiers: book.isbn ? [{ scheme: "ISBN", value: book.isbn }] : [],
     slug: book.slug,
     localBookId: book.id,
+    isCommunityAdded: book.isCommunityAdded,
   };
 }
 
@@ -111,15 +113,15 @@ export async function resolveCatalogWork(
   providerWorkId: string,
 ): Promise<EnhancedCatalogResult | null> {
   const store = getDomainStore();
-  const books = await store.listBooks();
   const normalizedWorkId = providerWorkId.toLowerCase();
-  const local = books.find(
-    (book) =>
-      (book.sourceId && book.sourceId.toLowerCase() === normalizedWorkId) ||
-      book.id.toLowerCase() === normalizedWorkId,
-  );
+  const local = typeof store.getBookByProviderWorkId === "function"
+    ? await store.getBookByProviderWorkId(providerWorkId)
+    : (await store.listBooks(50)).find(
+        (book) =>
+          (book.sourceId && book.sourceId.toLowerCase() === normalizedWorkId) ||
+          book.id.toLowerCase() === normalizedWorkId,
+      );
   if (local) return mapBookToCatalogResult(local);
-
   if (process.env.OPEN_LIBRARY_LIVE !== "true") return null;
   const provider = new OpenLibraryProvider({
     contactEmail: process.env.OPEN_LIBRARY_CONTACT_EMAIL,
@@ -130,4 +132,62 @@ export async function resolveCatalogWork(
       (book) => book.providerWorkId.toLowerCase() === normalizedWorkId,
     ) ?? null
   );
+}
+
+export type IsbnAvailabilityResult =
+  | { status: "INVALID_ISBN"; message: string }
+  | { status: "LOCAL_EXISTS"; book: BookWork; isbn: string }
+  | { status: "OPEN_LIBRARY_EXISTS"; result: EnhancedCatalogResult; isbn: string }
+  | { status: "AVAILABLE"; isbn: string };
+
+export async function checkIsbnAvailability(
+  rawIsbn: string,
+): Promise<IsbnAvailabilityResult> {
+  const cleanIsbn = normalizeIsbn(rawIsbn);
+  if (!isValidIsbn(cleanIsbn)) {
+    return {
+      status: "INVALID_ISBN",
+      message: "Please enter a valid 10- or 13-digit ISBN.",
+    };
+  }
+
+  const store = getDomainStore();
+  const localBook = typeof store.findBookByIsbn === "function"
+    ? await store.findBookByIsbn(cleanIsbn)
+    : (await store.listBooks()).find((b) => b.isbn && normalizeIsbn(b.isbn) === cleanIsbn);
+  if (localBook) {
+    return {
+      status: "LOCAL_EXISTS",
+      book: localBook,
+      isbn: cleanIsbn,
+    };
+  }
+
+  if (process.env.OPEN_LIBRARY_LIVE === "true") {
+    try {
+      const provider = new OpenLibraryProvider({
+        contactEmail: process.env.OPEN_LIBRARY_CONTACT_EMAIL,
+      });
+      const upstream = await provider.search(cleanIsbn, "0", 5);
+      if (upstream.results.length > 0) {
+        const match = upstream.results[0];
+        return {
+          status: "OPEN_LIBRARY_EXISTS",
+          result: {
+            ...match,
+            slug: slugify(match.title, match.providerWorkId),
+            localBookId: `book-${match.providerWorkId.toLowerCase()}`,
+          },
+          isbn: cleanIsbn,
+        };
+      }
+    } catch {
+      // Upstream outage fallback
+    }
+  }
+
+  return {
+    status: "AVAILABLE",
+    isbn: cleanIsbn,
+  };
 }

@@ -4,7 +4,7 @@ import { launchSeed } from "./launch-seed";
 describe("launch seed", () => {
   it("contains the curated public surface with stable unique identifiers", () => {
     expect(launchSeed.books).toHaveLength(4);
-    expect(launchSeed.profiles).toHaveLength(3);
+    expect(launchSeed.profiles).toHaveLength(4);
     expect(launchSeed.roasts).toHaveLength(4);
 
     for (const records of [launchSeed.books, launchSeed.profiles, launchSeed.roasts]) {

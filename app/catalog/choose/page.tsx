@@ -16,7 +16,7 @@ function determineCoverTone(providerWorkId: string): (typeof COVER_TONES)[number
 }
 
 function slugify(title: string, providerWorkId: string) {
-  const titleSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 70);
+  const titleSlug = title.toLowerCase().replace(/[^\p{L}\p{N}0-9]+/gu, "-").replace(/^-+|-+$/gu, "").slice(0, 70);
   return `${titleSlug || "book"}-${providerWorkId.toLowerCase()}`;
 }
 export default async function CatalogChoosePage({ searchParams }: CatalogChoosePageProps) {

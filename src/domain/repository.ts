@@ -5,15 +5,61 @@
  * the same operations can later move behind an HTTP service.
  */
 
-import { and, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, inArray, lte, notInArray, or, sql, type SQL } from "drizzle-orm";
 import type { NeonHttpDatabase } from "drizzle-orm/neon-http";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { db } from "@/src/db";
 import * as schema from "@/src/db/schema";
 import { isDemoMode } from "@/src/lib/runtime-config";
-import { calculateBadnessSummary, composeFeed, validateRoastDraft, type FlawTag, type ReactionKind } from "./core";
-import { createMemoryStore, memoryStore, type RoastInput, type StoreResult } from "./store";
-import type { BookWork, Bottom100Item, Bottom100SortOption, ModerationAction, Profile, Report, ReportCategory, Roast, RoastStatus } from "./types";
+import {
+  calculateBadnessSummary,
+  composeFeed,
+  createCommunityBookSchema,
+  isValidIsbn,
+  normalizeIsbn,
+  updateCommunityBookSchema,
+  validateRoastDraft,
+  FLAW_TAGS,
+  type FlawTag,
+  type ReactionKind,
+} from "./core";
+import {
+  applyBottom100Sort,
+  BOTTOM_100_LIMIT,
+  BOTTOM_100_QUALIFIED_MIN_ROASTS,
+  BOTTOM_100_TOP_ROASTS,
+  compareBottom100Candidates,
+  createMemoryStore,
+  DEFAULT_FEED_LIMIT,
+  DISCOVERY_WINDOW_MS,
+  memoryStore,
+  normalizeRowCap,
+  resolveListLimit,
+  roundAverage,
+  weightedBadnessScore,
+  type RoastInput,
+  type StoreResult,
+} from "./store";
+import type {
+  BookSummary,
+  BookSummaryMap,
+  BookWork,
+  Bottom100Item,
+  Bottom100Options,
+  Bottom100SortOption,
+  CreateCommunityBookInput,
+  ListFeedOptions,
+  ListRoastsByAuthorOptions,
+  ListRoastsOptions,
+  ModerationAction,
+  Profile,
+  Report,
+  ReportCategory,
+  Roast,
+  RoastStatus,
+  TopRoaster,
+  UpdateCommunityBookInput,
+} from "./types";
 
 type MemoryStore = ReturnType<typeof createMemoryStore>;
 type Asyncify<T> = {
@@ -47,6 +93,7 @@ function coverToneFromMetadata(metadata: Record<string, unknown> | null) {
 }
 
 function mapBook(row: BookRow): BookWork {
+  const metadata = row.metadata as Record<string, unknown> | null;
   return {
     id: row.id,
     slug: row.slug,
@@ -57,6 +104,9 @@ function mapBook(row: BookRow): BookWork {
     coverTone: coverToneFromMetadata(row.metadata),
     sourceId: row.providerWorkId,
     coverUrl: row.coverUrl ?? undefined,
+    isCommunityAdded: row.provider === "community" || Boolean(metadata?.isCommunityAdded),
+    createdByUserId: typeof metadata?.createdByUserId === "string" ? metadata.createdByUserId : undefined,
+    isbn: typeof metadata?.isbn === "string" ? metadata.isbn : undefined,
   };
 }
 
@@ -77,6 +127,8 @@ function mapRoast(row: RoastRow, author: Profile): Roast {
     funnyCount: row.funnyCount,
     bookmarkCount: row.bookmarkCount,
     status: row.status,
+    sourceLabel: row.sourceLabel ?? null,
+    sourceUrl: row.sourceUrl ?? null,
   };
 }
 
@@ -115,14 +167,18 @@ function createMemoryDomainStore(): DomainStore {
     getBook: async (...args) => store.getBook(...args),
     getBookBySlug: async (...args) => store.getBookBySlug(...args),
     getBookSummary: async (...args) => store.getBookSummary(...args),
+    getBookSummaries: async (...args) => store.getBookSummaries(...args),
     getProfile: async (...args) => store.getProfile(...args),
     getProfileByHandle: async (...args) => store.getProfileByHandle(...args),
     getRoast: async (...args) => store.getRoast(...args),
     getRoastsForBook: async (...args) => store.getRoastsForBook(...args),
     listBooks: async (...args) => store.listBooks(...args),
+    getBooksByIds: async (...args) => store.getBooksByIds(...args),
+    getBookByProviderWorkId: async (...args) => store.getBookByProviderWorkId(...args),
     listFeed: async (...args) => store.listFeed(...args),
     listReports: async (...args) => store.listReports(...args),
     listRoasts: async (...args) => store.listRoasts(...args),
+    listRoastsByAuthor: async (...args) => store.listRoastsByAuthor(...args),
     moderateRoast: async (...args) => store.moderateRoast(...args),
     reportRoast: async (...args) => store.reportRoast(...args),
     resolveReport: async (...args) => store.resolveReport(...args),
@@ -133,7 +189,12 @@ function createMemoryDomainStore(): DomainStore {
     isFollowing: async (...args) => store.isFollowing(...args),
     listBookmarkedRoasts: async (...args) => store.listBookmarkedRoasts(...args),
     searchBooks: async (...args) => store.searchBooks(...args),
+    findBookByIsbn: async (...args) => store.findBookByIsbn(...args),
+    createCommunityBook: async (...args) => store.createCommunityBook(...args),
+    updateCommunityBook: async (...args) => store.updateCommunityBook(...args),
+    deleteCommunityBook: async (...args) => store.deleteCommunityBook(...args),
     listBottom100: async (...args) => store.listBottom100(...args),
+    listTopRoasters: async (...args) => store.listTopRoasters(...args),
     upsertBook: async (...args) => store.upsertBook(...args),
     updateRoast: async (...args) => store.updateRoast(...args),
     listModerationActions: async (...args) => store.listModerationActions(...args),
@@ -185,8 +246,31 @@ function createPostgresStore(database: Database): DomainStore {
     return row ? mapProfile(row) : undefined;
   }
 
-  async function listRoasts() {
-    const rows = await findRoastsWithAuthors();
+  /*
+   * The sitemap, feeds, and moderation queue used to read the whole roast
+   * table. Status filtering, ordering, and pagination now happen in Postgres so
+   * a bounded page can be requested; a bare call still returns everything.
+   */
+  async function listRoasts(options?: ListRoastsOptions) {
+    const where = options?.status ? eq(schema.roasts.status, options.status) : undefined;
+    let query = findRoastsWithAuthors(where).orderBy(desc(schema.roasts.createdAt));
+    const limit = resolveListLimit(options?.limit);
+    const offset = resolveListLimit(options?.offset);
+    if (limit !== undefined) query = query.limit(limit) as typeof query;
+    if (offset !== undefined) query = query.offset(offset) as typeof query;
+    const rows = await query;
+    return rows.map(mapJoinedRoast);
+  }
+
+  async function listRoastsByAuthor(profileId: string, options?: ListRoastsByAuthorOptions) {
+    const profile = await findProfile(profileId);
+    if (!profile) return [];
+    const conditions = [eq(schema.roasts.authorProfileId, profile.id)];
+    if (options?.status) conditions.push(eq(schema.roasts.status, options.status));
+    let query = findRoastsWithAuthors(and(...conditions)).orderBy(desc(schema.roasts.createdAt));
+    const limit = resolveListLimit(options?.limit);
+    if (limit !== undefined) query = query.limit(limit) as typeof query;
+    const rows = await query;
     return rows.map(mapJoinedRoast);
   }
 
@@ -408,14 +492,188 @@ function createPostgresStore(database: Database): DomainStore {
     return row ? mapBook(row) : undefined;
   }
 
-  async function listBooks() {
-    const rows = await database.select().from(schema.bookWorks).orderBy(schema.bookWorks.title);
+  async function listBooks(limit?: number) {
+    let query = database.select().from(schema.bookWorks).orderBy(schema.bookWorks.title);
+    if (typeof limit === "number" && limit > 0) {
+      query = query.limit(limit) as typeof query;
+    }
+    const rows = await query;
     return rows.map(mapBook);
+  }
+
+  async function getBooksByIds(ids: string[]): Promise<BookWork[]> {
+    if (ids.length === 0) return [];
+    const validIds = ids.filter((id) => UUID_PATTERN.test(id));
+    if (validIds.length === 0) return [];
+    const rows = await database.select().from(schema.bookWorks).where(inArray(schema.bookWorks.id, validIds));
+    return rows.map(mapBook);
+  }
+
+  async function getBookByProviderWorkId(providerWorkId: string): Promise<BookWork | undefined> {
+    const clean = providerWorkId.trim();
+    if (!clean) return undefined;
+    const [row] = await database
+      .select()
+      .from(schema.bookWorks)
+      .where(or(eq(schema.bookWorks.providerWorkId, clean), ilike(schema.bookWorks.providerWorkId, clean)))
+      .limit(1);
+    return row ? mapBook(row) : undefined;
+  }
+  async function findBookByIsbn(isbn: string): Promise<BookWork | undefined> {
+    const normalized = normalizeIsbn(isbn);
+    if (!normalized) return undefined;
+
+    const [identifier] = await database
+      .select()
+      .from(schema.bookIdentifiers)
+      .where(and(eq(schema.bookIdentifiers.scheme, "ISBN"), eq(schema.bookIdentifiers.value, normalized)))
+      .limit(1);
+
+    if (identifier) {
+      const [row] = await database
+        .select()
+        .from(schema.bookWorks)
+        .where(eq(schema.bookWorks.id, identifier.bookWorkId))
+        .limit(1);
+      if (row) return mapBook(row);
+    }
+
+    const [workRow] = await database
+      .select()
+      .from(schema.bookWorks)
+      .where(
+        or(
+          eq(schema.bookWorks.providerWorkId, `community-${normalized}`),
+          eq(schema.bookWorks.providerWorkId, normalized),
+        ),
+      )
+      .limit(1);
+
+    return workRow ? mapBook(workRow) : undefined;
+  }
+
+  async function createCommunityBook(input: CreateCommunityBookInput): Promise<StoreResult<BookWork>> {
+    const parsed = createCommunityBookSchema.safeParse(input);
+    if (!parsed.success) {
+      return { ok: false, code: "VALIDATION_ERROR", message: parsed.error.issues[0]?.message ?? "Invalid book data." };
+    }
+    const cleanIsbn = normalizeIsbn(input.isbn);
+    const existing = await findBookByIsbn(cleanIsbn);
+    if (existing) {
+      return { ok: false, code: "CONFLICT", message: "A book with this ISBN already exists." };
+    }
+
+    const provider = "community";
+    const providerWorkId = `community-${cleanIsbn}`;
+    const titleSlug = input.title.toLowerCase().replace(/[^\p{L}\p{N}0-9]+/gu, "-").replace(/^-+|-+$/gu, "").slice(0, 70) || "book";
+    const slug = `${titleSlug}-community-${cleanIsbn.toLowerCase()}`;
+    const metadata = {
+      coverTone: input.coverTone ?? "acid",
+      isCommunityAdded: true,
+      createdByUserId: input.createdByUserId,
+      isbn: cleanIsbn,
+    };
+
+    try {
+      const [row] = await database
+        .insert(schema.bookWorks)
+        .values({
+          provider,
+          providerWorkId,
+          slug,
+          title: input.title.trim(),
+          authors: input.authors.map((a) => a.trim()).filter(Boolean),
+          firstPublished: input.firstPublished ?? null,
+          description: input.description?.trim() ?? "",
+          coverUrl: input.coverUrl ?? null,
+          metadata,
+        })
+        .returning();
+
+      if (!row) {
+        return { ok: false, code: "VALIDATION_ERROR", message: "Failed to save community book." };
+      }
+      const book = mapBook(row);
+      await database
+        .insert(schema.bookIdentifiers)
+        .values({
+          bookWorkId: book.id,
+          scheme: "ISBN",
+          value: cleanIsbn,
+        })
+        .onConflictDoNothing();
+
+      return { ok: true, data: book };
+    } catch (error) {
+      const conflict = await findBookByIsbn(cleanIsbn);
+      if (conflict) {
+        return { ok: false, code: "CONFLICT", message: "A book with this ISBN already exists." };
+      }
+      throw error;
+    }
+  }
+
+  async function updateCommunityBook(input: UpdateCommunityBookInput): Promise<StoreResult<BookWork>> {
+    const parsed = updateCommunityBookSchema.safeParse(input);
+    if (!parsed.success) {
+      return { ok: false, code: "VALIDATION_ERROR", message: parsed.error.issues[0]?.message ?? "Invalid book update data." };
+    }
+
+    const [existing] = await database.select().from(schema.bookWorks).where(eq(schema.bookWorks.id, input.id)).limit(1);
+    if (!existing) {
+      return { ok: false, code: "NOT_FOUND", message: "Book not found." };
+    }
+
+    const existingMetadata = (existing.metadata as Record<string, unknown> | null) ?? {};
+    const metadata = {
+      ...existingMetadata,
+      coverTone: input.coverTone ?? existingMetadata.coverTone ?? "acid",
+    };
+
+    try {
+      const [updated] = await database
+        .update(schema.bookWorks)
+        .set({
+          title: input.title.trim(),
+          authors: input.authors.map((a) => a.trim()).filter(Boolean),
+          firstPublished: input.firstPublished ?? null,
+          description: input.description?.trim() ?? "",
+          coverUrl: input.coverUrl !== undefined ? input.coverUrl : existing.coverUrl,
+          metadata,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.bookWorks.id, input.id))
+        .returning();
+
+      return { ok: true, data: mapBook(updated ?? existing) };
+    } catch (error) {
+      return databaseFailure(error, { ok: false, code: "CONFLICT", message: "Failed to update book." });
+    }
+  }
+
+  async function deleteCommunityBook(id: string): Promise<StoreResult<{ id: string }>> {
+    if (!UUID_PATTERN.test(id)) {
+      return { ok: false, code: "NOT_FOUND", message: "Book not found." };
+    }
+    try {
+      const [deleted] = await database
+        .delete(schema.bookWorks)
+        .where(eq(schema.bookWorks.id, id))
+        .returning();
+      if (!deleted) {
+        return { ok: false, code: "NOT_FOUND", message: "Book not found." };
+      }
+      return { ok: true, data: { id: deleted.id } };
+    } catch (error) {
+      return databaseFailure(error, { ok: false, code: "NOT_FOUND", message: "Unable to delete book." });
+    }
   }
   async function searchBooks(query: string, limit = 20) {
     const clean = query.trim();
     if (!clean) return [];
     const pattern = `%${clean}%`;
+    const cleanIsbn = normalizeIsbn(clean);
+    const isbnPattern = cleanIsbn ? `%${cleanIsbn}%` : pattern;
     const rows = await database
       .select()
       .from(schema.bookWorks)
@@ -425,24 +683,68 @@ function createPostgresStore(database: Database): DomainStore {
           ilike(schema.bookWorks.slug, pattern),
           ilike(schema.bookWorks.providerWorkId, pattern),
           sql`${schema.bookWorks.authors}::text ILIKE ${pattern}`,
+          sql`${schema.bookWorks.metadata}->>'isbn' ILIKE ${isbnPattern}`,
         ),
       )
       .limit(limit);
     return rows.map(mapBook);
   }
 
-  async function getBookSummary(bookId: string) {
-    if (!UUID_PATTERN.test(bookId)) return { average: null, count: 0, worstCount: 0, flawCounts: calculateBadnessSummary([]).flawCounts };
+  /*
+   * Ratings and flaw tallies are aggregated by Postgres instead of shipping one
+   * row per roast to the application. `count(*) filter (...)` keeps the flaw
+   * histogram in the same single grouped scan.
+   */
+  const flawCountColumns = FLAW_TAGS.reduce((acc, tag) => {
+    acc[tag] = sql<number>`count(*) filter (where ${tag}::text = any(${schema.roasts.flawTags}))::int`;
+    return acc;
+  }, {} as Record<FlawTag, SQL<number>>);
+
+  function emptySummary(): BookSummary {
+    return calculateBadnessSummary([]);
+  }
+
+  async function getBookSummaries(bookIds: string[]): Promise<BookSummaryMap> {
+    const summaries: BookSummaryMap = {};
+    const requested = [...new Set(bookIds)];
+    for (const bookId of requested) summaries[bookId] = emptySummary();
+
+    const validIds = requested.filter((id) => UUID_PATTERN.test(id));
+    if (validIds.length === 0) return summaries;
+
     const rows = await database
-      .select({ rating: schema.roasts.rating, flawTags: schema.roasts.flawTags })
+      .select({
+        bookId: schema.roasts.bookWorkId,
+        count: sql<number>`count(*)::int`,
+        total: sql<number>`sum(${schema.roasts.rating})::int`,
+        worstCount: sql<number>`count(*) filter (where ${schema.roasts.rating} = 5)::int`,
+        ...flawCountColumns,
+      })
       .from(schema.roasts)
-      .where(and(eq(schema.roasts.bookWorkId, bookId), eq(schema.roasts.status, "PUBLISHED")));
-    return calculateBadnessSummary(
-      rows.map((row) => ({
-        rating: row.rating as Roast["rating"],
-        flawTags: (row.flawTags as FlawTag[]) ?? [],
-      })),
-    );
+      .where(and(inArray(schema.roasts.bookWorkId, validIds), eq(schema.roasts.status, "PUBLISHED")))
+      .groupBy(schema.roasts.bookWorkId);
+
+    for (const row of rows) {
+      const count = Number(row.count);
+      if (count === 0) continue;
+      const flawCounts = FLAW_TAGS.reduce((acc, tag) => {
+        acc[tag] = Number(row[tag] ?? 0);
+        return acc;
+      }, {} as Record<FlawTag, number>);
+      summaries[row.bookId] = {
+        average: roundAverage(Number(row.total), count),
+        count,
+        worstCount: Number(row.worstCount),
+        flawCounts,
+      };
+    }
+    return summaries;
+  }
+
+  async function getBookSummary(bookId: string): Promise<BookSummary> {
+    if (!UUID_PATTERN.test(bookId)) return emptySummary();
+    const summaries = await getBookSummaries([bookId]);
+    return summaries[bookId] ?? emptySummary();
   }
 
   async function getUserReactionStates(userId: string, roastIds: string[]): Promise<Record<string, { fair: boolean; funny: boolean; bookmarked: boolean }>> {
@@ -531,21 +833,38 @@ function createPostgresStore(database: Database): DomainStore {
     return rows.map(mapJoinedRoast);
   }
 
-  async function listFeed(viewerId?: string) {
+  /*
+   * Both feed lanes are filtered, ranked, and capped by Postgres. The 2:1
+   * following/discovery blend still runs through the shared composeFeed rule so
+   * the memory store and this store stay interchangeable.
+   */
+  async function listFeed(viewerId?: string, options?: ListFeedOptions) {
+    const limit = resolveListLimit(options?.limit, DEFAULT_FEED_LIMIT) ?? DEFAULT_FEED_LIMIT;
     const viewer = viewerId ? await findProfile(viewerId) : undefined;
     const followed = viewer
       ? await database.select({ id: schema.follows.followeeProfileId }).from(schema.follows).where(eq(schema.follows.followerProfileId, viewer.id))
       : [];
-    const followedIds = new Set(followed.map((row) => row.id));
-    const rows = await findRoastsWithAuthors(eq(schema.roasts.status, "PUBLISHED")).orderBy(desc(schema.roasts.createdAt));
-    const now = Date.now();
-    const discovery = rows
-      .map(mapJoinedRoast)
-      .filter((roast) => !followedIds.has(roast.authorId))
-      .filter((roast) => now - new Date(roast.createdAt).getTime() <= 14 * 24 * 60 * 60 * 1000)
-      .sort((a, b) => (2 * b.fairCount + b.funnyCount + 2 * b.bookmarkCount) - (2 * a.fairCount + a.funnyCount + 2 * a.bookmarkCount) || b.createdAt.localeCompare(a.createdAt));
-    const following = rows.map(mapJoinedRoast).filter((roast) => followedIds.has(roast.authorId)).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-    return composeFeed({ following, discovery });
+    const followedIds = [...new Set(followed.map((row) => row.id))];
+    const cutoff = new Date(Date.now() - DISCOVERY_WINDOW_MS);
+    const engagement = sql`(2 * ${schema.roasts.fairCount} + ${schema.roasts.funnyCount} + 2 * ${schema.roasts.bookmarkCount})`;
+
+    const discoveryConditions = [eq(schema.roasts.status, "PUBLISHED"), gte(schema.roasts.createdAt, cutoff)];
+    if (followedIds.length > 0) discoveryConditions.push(notInArray(schema.roasts.authorProfileId, followedIds));
+
+    const [followingRows, discoveryRows] = await Promise.all([
+      followedIds.length > 0
+        ? findRoastsWithAuthors(and(eq(schema.roasts.status, "PUBLISHED"), inArray(schema.roasts.authorProfileId, followedIds)))
+            .orderBy(desc(schema.roasts.createdAt))
+            .limit(limit)
+        : Promise.resolve([]),
+      findRoastsWithAuthors(and(...discoveryConditions))
+        .orderBy(sql`${engagement} desc`, desc(schema.roasts.createdAt))
+        .limit(limit),
+    ]);
+
+    const following = followingRows.map(mapJoinedRoast);
+    const discovery = discoveryRows.map(mapJoinedRoast);
+    return composeFeed({ following, discovery }).slice(0, limit);
   }
 
   async function listReports() {
@@ -556,7 +875,7 @@ function createPostgresStore(database: Database): DomainStore {
   async function exportProfile(userId: string) {
     const profile = await getProfile(userId);
     if (!profile) return { ok: false as const, code: "NOT_FOUND" as const, message: "That profile was not found." };
-    const roasts = (await listRoasts()).filter((roast) => roast.authorId === profile.id);
+    const roasts = await listRoastsByAuthor(profile.id);
     return { ok: true as const, data: { profile, roasts } };
   }
 
@@ -584,25 +903,78 @@ function createPostgresStore(database: Database): DomainStore {
     }
     return deleted ? { ok: true as const, data: { deleted: true } } : { ok: false as const, code: "NOT_FOUND" as const, message: "That profile was not found." };
   }
-  async function listBottom100(sort: Bottom100SortOption = "shuffle"): Promise<Bottom100Item[]> {
-    const publishedRoasts = await findRoastsWithAuthors(eq(schema.roasts.status, "PUBLISHED")).orderBy(desc(schema.roasts.createdAt));
-    const roasts = publishedRoasts.map(mapJoinedRoast);
+  /*
+   * Ranking happens in Postgres: one grouped aggregate over published roasts
+   * orders books by the same Bayesian weighted score used by the memory store
+   * and returns at most 100 rows. The exact score values are still computed in
+   * TypeScript from the count and rating total so both stores emit identical
+   * numbers. Receipts come back through a single windowed query rather than one
+   * query per book.
+   */
+  async function listBottom100(sort: Bottom100SortOption = "shuffle", options?: Bottom100Options): Promise<Bottom100Item[]> {
+    const weightedScoreSql = sql`round((count(*) * round(avg(${schema.roasts.rating}), 1) + 6.0) / (count(*) + 2), 2)`;
+    const grouped = await database
+      .select({
+        bookId: schema.roasts.bookWorkId,
+        count: sql<number>`count(*)::int`,
+        total: sql<number>`sum(${schema.roasts.rating})::int`,
+        worstCount: sql<number>`count(*) filter (where ${schema.roasts.rating} = 5)::int`,
+      })
+      .from(schema.roasts)
+      .where(eq(schema.roasts.status, "PUBLISHED"))
+      .groupBy(schema.roasts.bookWorkId)
+      .orderBy(
+        sql`(count(*) >= ${BOTTOM_100_QUALIFIED_MIN_ROASTS}) desc`,
+        sql`${weightedScoreSql} desc`,
+        sql`count(*) desc`,
+      )
+      .limit(BOTTOM_100_LIMIT);
 
-    const roastsByBook = new Map<string, Roast[]>();
-    for (const roast of roasts) {
-      const list = roastsByBook.get(roast.bookId) ?? [];
-      list.push(roast);
-      roastsByBook.set(roast.bookId, list);
-    }
-
-    const bookIds = Array.from(roastsByBook.keys()).filter((id) => UUID_PATTERN.test(id));
+    const bookIds = grouped.map((row) => row.bookId).filter((id) => UUID_PATTERN.test(id));
     if (bookIds.length === 0) return [];
 
-    const bookRows = await database
-      .select()
-      .from(schema.bookWorks)
-      .where(sql`${schema.bookWorks.id} IN (${sql.join(bookIds.map((id) => sql`${id}`), sql`, `)})`);
-    const books = bookRows.map(mapBook);
+    /* A window function picks each book's five receipts inside Postgres. The
+     * subquery projects flat scalars only, because Drizzle cannot re-select a
+     * nested table shape from an aliased subquery. */
+    const rankedRoasts = database
+      .select({
+        roastId: schema.roasts.id,
+        bookId: schema.roasts.bookWorkId,
+        position: sql<number>`row_number() over (
+          partition by ${schema.roasts.bookWorkId}
+          order by (2 * ${schema.roasts.fairCount} + ${schema.roasts.funnyCount}) desc,
+                   ${schema.roasts.rating} desc,
+                   ${schema.roasts.createdAt} desc
+        )`.as("position"),
+      })
+      .from(schema.roasts)
+      .where(and(eq(schema.roasts.status, "PUBLISHED"), inArray(schema.roasts.bookWorkId, bookIds)))
+      .as("ranked_roasts");
+
+    const [bookRows, topRoastRows] = await Promise.all([
+      database.select().from(schema.bookWorks).where(inArray(schema.bookWorks.id, bookIds)),
+      database
+        .select({ roastId: rankedRoasts.roastId, bookId: rankedRoasts.bookId, position: rankedRoasts.position })
+        .from(rankedRoasts)
+        .where(lte(rankedRoasts.position, BOTTOM_100_TOP_ROASTS)),
+    ]);
+
+    const topRoastIds = topRoastRows.map((row) => row.roastId);
+    const receiptRows = topRoastIds.length
+      ? await findRoastsWithAuthors(inArray(schema.roasts.id, topRoastIds))
+      : [];
+    const receiptsById = new Map(receiptRows.map((row) => [row.roast.id, mapJoinedRoast(row)]));
+
+    const booksById = new Map(bookRows.map((row) => [row.id, mapBook(row)]));
+    const topRoastsByBook = new Map<string, Roast[]>();
+    for (const row of [...topRoastRows].sort((a, b) => Number(a.position) - Number(b.position))) {
+      const roast = receiptsById.get(row.roastId);
+      if (!roast) continue;
+      const list = topRoastsByBook.get(row.bookId) ?? [];
+      list.push(roast);
+      topRoastsByBook.set(row.bookId, list);
+    }
+
     const candidates: Array<{
       book: BookWork;
       summary: { average: number | null; count: number; worstCount: number };
@@ -610,37 +982,22 @@ function createPostgresStore(database: Database): DomainStore {
       topRoasts: Roast[];
     }> = [];
 
-    for (const book of books) {
-      const bookRoasts = roastsByBook.get(book.id) ?? [];
-      if (bookRoasts.length === 0) continue;
-
-      const count = bookRoasts.length;
-      const worstCount = bookRoasts.filter((r) => r.rating === 5).length;
-      const average = count > 0 ? Number((bookRoasts.reduce((acc, r) => acc + r.rating, 0) / count).toFixed(1)) : null;
-      const weightedScore = average !== null
-        ? Number(((count * average + 2 * 3.0) / (count + 2)).toFixed(2))
-        : 0;
-
-      const topRoasts = [...bookRoasts]
-        .sort((a, b) => (2 * b.fairCount + b.funnyCount) - (2 * a.fairCount + a.funnyCount) || b.rating - a.rating)
-        .slice(0, 5);
-
+    for (const row of grouped) {
+      const book = booksById.get(row.bookId);
+      const count = Number(row.count);
+      if (!book || count === 0) continue;
+      const average = roundAverage(Number(row.total), count);
       candidates.push({
         book,
-        summary: { average, count, worstCount },
-        weightedScore,
-        topRoasts,
+        summary: { average, count, worstCount: Number(row.worstCount) },
+        weightedScore: weightedBadnessScore(count, average),
+        topRoasts: topRoastsByBook.get(row.bookId) ?? [],
       });
     }
 
-    candidates.sort((a, b) => {
-      const aQualified = a.summary.count >= 3 ? 1 : 0;
-      const bQualified = b.summary.count >= 3 ? 1 : 0;
-      if (aQualified !== bQualified) return bQualified - aQualified;
-      return b.weightedScore - a.weightedScore || b.summary.count - a.summary.count;
-    });
+    candidates.sort(compareBottom100Candidates);
 
-    const ranked: Bottom100Item[] = candidates.slice(0, 100).map((item, index) => ({
+    const ranked: Bottom100Item[] = candidates.map((item, index) => ({
       rank: index + 1,
       book: item.book,
       summary: item.summary,
@@ -648,16 +1005,43 @@ function createPostgresStore(database: Database): DomainStore {
       topRoasts: item.topRoasts,
     }));
 
-    if (sort === "badness") return ranked;
-    if (sort === "roasts") return [...ranked].sort((a, b) => b.summary.count - a.summary.count || a.rank - b.rank);
-    if (sort === "title") return [...ranked].sort((a, b) => a.book.title.localeCompare(b.book.title));
+    return applyBottom100Sort(ranked, sort, options);
+  }
 
-    const shuffled = [...ranked];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
+  /*
+   * The leaderboard is a grouped aggregate with the ranking and the row cap
+   * applied by Postgres, so a 25-row board never reads the roast table.
+   */
+  async function listTopRoasters(limit = 25): Promise<TopRoaster[]> {
+    const boundedLimit = normalizeRowCap(limit);
+    const fairTotal = sql<number>`coalesce(sum(${schema.roasts.fairCount}), 0)::int`;
+    const funnyTotal = sql<number>`coalesce(sum(${schema.roasts.funnyCount}), 0)::int`;
+    const rows = await database
+      .select({
+        profile: schema.profiles,
+        roastCount: sql<number>`count(*)::int`,
+        fairCount: fairTotal,
+        funnyCount: funnyTotal,
+        totalReactions: sql<number>`(coalesce(sum(${schema.roasts.fairCount}), 0) + coalesce(sum(${schema.roasts.funnyCount}), 0))::int`,
+      })
+      .from(schema.roasts)
+      .innerJoin(schema.profiles, eq(schema.profiles.id, schema.roasts.authorProfileId))
+      .where(eq(schema.roasts.status, "PUBLISHED"))
+      .groupBy(schema.profiles.id)
+      .orderBy(
+        sql`(coalesce(sum(${schema.roasts.fairCount}), 0) + coalesce(sum(${schema.roasts.funnyCount}), 0)) desc`,
+        sql`count(*) desc`,
+        schema.profiles.handle,
+      )
+      .limit(boundedLimit);
+
+    return rows.map((row) => ({
+      profile: mapProfile(row.profile),
+      roastCount: Number(row.roastCount),
+      fairCount: Number(row.fairCount),
+      funnyCount: Number(row.funnyCount),
+      totalReactions: Number(row.totalReactions),
+    }));
   }
 
   async function listModerationActions(): Promise<ModerationAction[]> {
@@ -680,6 +1064,7 @@ function createPostgresStore(database: Database): DomainStore {
     getBook,
     getBookBySlug,
     getBookSummary,
+    getBookSummaries,
     getProfile,
     getProfileByHandle: async (handle: string) => {
       const [row] = await database.select().from(schema.profiles).where(ilike(schema.profiles.handle, handle)).limit(1);
@@ -688,11 +1073,12 @@ function createPostgresStore(database: Database): DomainStore {
     getRoast,
     getRoastsForBook,
     listBooks,
+    getBooksByIds,
+    getBookByProviderWorkId,
     listFeed,
     listReports,
     listRoasts,
-    moderateRoast,
-    reportRoast,
+    listRoastsByAuthor,
     resolveReport,
     setBookmark,
     setFollow,
@@ -702,28 +1088,46 @@ function createPostgresStore(database: Database): DomainStore {
     listBookmarkedRoasts,
     upsertBook,
     searchBooks,
+    findBookByIsbn,
+    createCommunityBook,
+    updateCommunityBook,
+    deleteCommunityBook,
     listBottom100,
+    listTopRoasters,
     updateRoast,
     listModerationActions,
   } as DomainStore;
 }
-
 const globalRepositoryState = globalThis as typeof globalThis & {
   __badreadsAsyncMemoryStore?: DomainStore;
   __badreadsPostgresStore?: DomainStore;
 };
 
-const asyncMemoryStore = globalRepositoryState.__badreadsAsyncMemoryStore ?? createMemoryDomainStore();
-globalRepositoryState.__badreadsAsyncMemoryStore = asyncMemoryStore;
-
+function isCompleteDomainStore(candidate?: DomainStore): candidate is DomainStore {
+  return Boolean(
+    candidate
+    && typeof candidate.findBookByIsbn === "function"
+    && typeof candidate.createCommunityBook === "function"
+    && typeof candidate.updateCommunityBook === "function"
+    && typeof candidate.deleteCommunityBook === "function"
+    && typeof candidate.searchBooks === "function"
+    && typeof candidate.listBooks === "function"
+    && typeof candidate.getBookSummaries === "function"
+    && typeof candidate.listRoastsByAuthor === "function"
+  );
+}
 export function getDomainStore(): DomainStore {
-  if (isDemoMode() || !db) return asyncMemoryStore;
-  if (!globalRepositoryState.__badreadsPostgresStore) {
+  if (isDemoMode() || !db) {
+    if (!isCompleteDomainStore(globalRepositoryState.__badreadsAsyncMemoryStore)) {
+      globalRepositoryState.__badreadsAsyncMemoryStore = createMemoryDomainStore();
+    }
+    return globalRepositoryState.__badreadsAsyncMemoryStore;
+  }
+  if (!isCompleteDomainStore(globalRepositoryState.__badreadsPostgresStore)) {
     globalRepositoryState.__badreadsPostgresStore = createPostgresStore(db);
   }
   return globalRepositoryState.__badreadsPostgresStore;
 }
-
 export function createPostgresDomainStore(database: Database): DomainStore {
   return createPostgresStore(database);
 }

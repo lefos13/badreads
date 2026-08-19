@@ -163,7 +163,7 @@ Do **NOT** add the following out-of-scope features without explicit instruction:
 - **No user file/image uploads** (covers use Open Library or predetermined tone palettes: `coral`, `acid`, `lavender`, `ink`).
 - **No AI-generated reviews or automated summaries**.
 - **No recommendation algorithms or ML models**.
-- **No native mobile apps or monetization/ads**.
+- **No native mobile apps or monetization/ads**. Community/creator support is an allowed exception and is not monetization: the `/support` page links out to Buy Me a Coffee and Ko-fi via env-driven URLs (`NEXT_PUBLIC_BMC_URL`, `NEXT_PUBLIC_KOFI_URL`) and must stay free-to-use, non-pay-to-play, and free of advertising.
 - **Independent Parody Brand**: Do not copy Goodreads code, data, assets, layouts, or wording.
 
 ---

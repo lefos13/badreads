@@ -46,4 +46,17 @@ describe("BookCard", () => {
     expect(document.querySelector(".cover-title")?.textContent).toBe("The Alchemist");
     expect(screen.queryByRole("img")).toBeNull();
   });
+
+  it("renders community-added badge when isCommunityAdded is true", () => {
+    render(
+      <BookCard
+        book={{
+          ...baseBook,
+          isCommunityAdded: true,
+        }}
+      />,
+    );
+
+    expect(screen.getByText("✳ Community Added")).toBeInTheDocument();
+  });
 });

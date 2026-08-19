@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BookCard } from "@/components/BookCard";
 import { RoastCard } from "@/components/RoastCard";
+import { selectWorstOfWeek } from "@/src/domain/editorial";
 import { getDomainStore } from "@/src/domain/repository";
 import type { ReactionState } from "@/src/domain/types";
 import { getSession } from "@/src/lib/session";
@@ -14,20 +15,37 @@ import { getSession } from "@/src/lib/session";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const session = await getSession();
   const store = getDomainStore();
-  const [bottom100, feed, allBooks] = await Promise.all([
-    store.listBottom100("badness"),
+  // The bottom-100 board does not depend on the viewer, so it starts before the
+  // session is awaited instead of queueing behind it.
+  const bottom100Promise = store.listBottom100("badness");
+  const session = await getSession();
+  const [bottom100, feed] = await Promise.all([
+    bottom100Promise,
     store.listFeed(session?.user?.id),
-    store.listBooks(),
   ]);
+  const worst = selectWorstOfWeek(feed);
   const previewRoasts = feed.slice(0, 3);
   const featuredItems = bottom100.slice(0, 8);
   const featuredBooks = featuredItems.map((item) => item.book);
+  const previewBookIds = Array.from(new Set([
+    ...previewRoasts.map((roast) => roast.bookId),
+    ...(worst ? [worst.roast.bookId] : []),
+  ]));
+  const previewRoastIds = Array.from(new Set([
+    ...previewRoasts.map((roast) => roast.id),
+    ...(worst ? [worst.roast.id] : []),
+  ]));
+  const [previewBooks, reactionStates] = await Promise.all([
+    store.getBooksByIds(previewBookIds),
+    session?.user?.id
+      ? store.getUserReactionStates(session.user.id, previewRoastIds)
+      : Promise.resolve<Record<string, ReactionState>>({}),
+  ]);
+  const allBooks = [...featuredBooks, ...previewBooks];
+  const booksById = new Map(allBooks.map((book) => [book.id, book] as const));
+  const worstBook = worst ? booksById.get(worst.roast.bookId) : undefined;
   const summaries = new Map(featuredItems.map((item) => [item.book.id, item.summary]));
-  const reactionStates = session?.user?.id
-    ? await store.getUserReactionStates(session.user.id, previewRoasts.map((r) => r.id))
-    : {};
   return (
     <main>
       <section className="hero">
@@ -64,6 +82,24 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {worst ? (
+        <section className="section page-width">
+          <div className="worst-of-week">
+            <span className="eyebrow mono">Worst of the week / The most-applauded letdown</span>
+            <h2>This week&apos;s most-applauded letdown.</h2>
+            {worstBook ? (
+              <RoastCard
+                bookSlug={worstBook.slug}
+                bookTitle={worstBook.title}
+                reactionState={reactionStates[worst.roast.id]}
+                roast={worst.roast}
+              />
+            ) : null}
+            <Link className="button button-quiet" href="/feed">More from the feed →</Link>
+          </div>
+        </section>
+      ) : null}
+
       <section className="section page-width">
         <div className="section-heading">
           <h2>From the bad side of the shelf</h2>
@@ -72,7 +108,7 @@ export default async function HomePage() {
         <div className="feed-grid">
           <div className="roast-list">
             {previewRoasts.map((roast) => {
-              const book = allBooks.find((candidate) => candidate.id === roast.bookId);
+              const book = booksById.get(roast.bookId);
               return book ? <RoastCard bookSlug={book.slug} bookTitle={book.title} key={roast.id} reactionState={reactionStates[roast.id]} roast={roast} /> : null;
             })}
           </div>

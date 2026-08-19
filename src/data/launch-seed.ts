@@ -21,6 +21,11 @@ export const launchSeed = {
       name: "Jules (in parentheses)",
       email: "jules@badreads.local",
     },
+    {
+      id: "seed-user-lefteris",
+      name: "Lefteris Evagelinos",
+      email: "lefterisevagelinos1996@gmail.com",
+    },
   ],
   profiles: [
     {
@@ -43,6 +48,13 @@ export const launchSeed = {
       handle: "julesinparentheses",
       displayName: "Jules (in parentheses)",
       bio: "The ending was a personal attack.",
+    },
+    {
+      id: "00000000-0000-4000-8000-000000000004",
+      userId: "seed-user-lefteris",
+      handle: "lefteris",
+      displayName: "Lefteris Evagelinos",
+      bio: "Founder & reviewer. Reading the quiet part out loud.",
     },
   ],
   books: [

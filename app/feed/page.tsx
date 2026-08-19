@@ -26,7 +26,10 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 
   const session = await getSession();
   const store = getDomainStore();
-  const [rawRoasts, unsortedBooks] = await Promise.all([store.listFeed(session?.user?.id), store.listBooks()]);
+  const [rawRoasts, sidebarCandidates] = await Promise.all([
+    store.listFeed(session?.user?.id),
+    store.listBooks(6),
+  ]);
 
   let roasts = rawRoasts;
   if (flaw) {
@@ -35,13 +38,16 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
   if (rating) {
     roasts = roasts.filter((r) => r.rating === rating);
   }
-  const sidebarCandidates = unsortedBooks.slice(0, 6);
-  const [summariesList, reactionStates] = await Promise.all([
-    Promise.all(sidebarCandidates.map(async (book) => [book.id, await store.getBookSummary(book.id)] as const)),
+  const roastBookIds = Array.from(new Set(roasts.map((r) => r.bookId)));
+  // "Worst right now" shows the sidebar candidates, so summaries are fetched for
+  // exactly the books that are rendered — in one grouped query, not one per book.
+  const sidebarBooks = sidebarCandidates.slice(0, 3);
+  const [feedBooks, summaries, reactionStates] = await Promise.all([
+    store.getBooksByIds(roastBookIds),
+    store.getBookSummaries(sidebarBooks.map((book) => book.id)),
     session?.user?.id ? store.getUserReactionStates(session.user.id, roasts.map((r) => r.id)) : Promise.resolve<Record<string, ReactionState>>({}),
   ]);
-  const summaries = new Map(summariesList);
-  const books = unsortedBooks;
+  const booksById = new Map([...feedBooks, ...sidebarCandidates].map((book) => [book.id, book] as const));
 
   return (
     <main className="page-width section">
@@ -57,7 +63,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
         <div className="roast-list">
           {roasts.length ? (
             roasts.map((roast) => {
-              const book = books.find((candidate) => candidate.id === roast.bookId);
+              const book = booksById.get(roast.bookId);
               return book ? <RoastCard bookSlug={book.slug} bookTitle={book.title} key={roast.id} reactionState={reactionStates[roast.id]} roast={roast} /> : null;
             })
           ) : (
@@ -70,7 +76,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
         <aside>
           <span className="eyebrow mono">Worst right now</span>
           <div className="roast-list roast-book-list">
-            {books.slice(0, 3).map((book) => <BookCard key={book.id} book={book} average={summaries.get(book.id)?.average ?? null} roastCount={summaries.get(book.id)?.count ?? 0} />)}
+            {sidebarBooks.map((book) => <BookCard key={book.id} book={book} average={summaries[book.id]?.average ?? null} roastCount={summaries[book.id]?.count ?? 0} />)}
           </div>
         </aside>
       </div>

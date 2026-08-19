@@ -18,12 +18,19 @@ export function BookCard({ book, average, roastCount = 0 }: BookCardProps) {
             alt={`Cover of ${book.title}`}
             className="book-cover-image"
             fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            sizes="(max-width: 520px) 100vw, (max-width: 768px) 50vw, 250px"
             src={book.coverUrl}
           />
         ) : null}
       </div>
-      <h3>{book.title}</h3>
+      <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+        <h3>{book.title}</h3>
+        {book.isCommunityAdded ? (
+          <span className="community-badge mono" style={{ fontSize: "0.65rem", padding: "0.1rem 0.35rem" }}>
+            ✳ Community Added
+          </span>
+        ) : null}
+      </div>
       <p className="book-meta">{book.authors.join(", ")} · {book.firstPublished ?? "unknown year"}</p>
       <div className="badness-line">
         <span aria-label={average ? `${average} bad stars` : "No ratings yet"} className="badness-stars">
