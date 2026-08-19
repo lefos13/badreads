@@ -31,9 +31,7 @@ function mapBookToCatalogResult(book: BookWork): EnhancedCatalogResult {
     title: book.title,
     authors: book.authors,
     firstPublished: book.firstPublished,
-    coverUrl: book.sourceId && book.sourceId.startsWith("OL")
-      ? `https://covers.openlibrary.org/b/olid/${book.sourceId}-M.jpg`
-      : null,
+    coverUrl: book.coverUrl ?? null,
     identifiers: [],
     slug: book.slug,
     localBookId: book.id,

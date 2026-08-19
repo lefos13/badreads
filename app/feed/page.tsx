@@ -35,12 +35,13 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
   if (rating) {
     roasts = roasts.filter((r) => r.rating === rating);
   }
+  const sidebarCandidates = unsortedBooks.slice(0, 6);
   const [summariesList, reactionStates] = await Promise.all([
-    Promise.all(unsortedBooks.map(async (book) => [book.id, await store.getBookSummary(book.id)] as const)),
+    Promise.all(sidebarCandidates.map(async (book) => [book.id, await store.getBookSummary(book.id)] as const)),
     session?.user?.id ? store.getUserReactionStates(session.user.id, roasts.map((r) => r.id)) : Promise.resolve<Record<string, ReactionState>>({}),
   ]);
   const summaries = new Map(summariesList);
-  const books = unsortedBooks.sort((a, b) => (summaries.get(b.id)?.average ?? 0) - (summaries.get(a.id)?.average ?? 0));
+  const books = unsortedBooks;
 
   return (
     <main className="page-width section">

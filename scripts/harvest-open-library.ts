@@ -5,7 +5,7 @@ import { importBooksToDatabase, type BookImportItem } from "./import-books";
 
 const COVER_TONES = ["coral", "acid", "lavender", "ink"] as const;
 
-// Curated subjects across fiction, non-fiction, genres, classics, and popular subgenres
+// Curated English-first subjects across genres, bestsellers, and literary topics
 const SUBJECTS = [
   "bestseller",
   "new_york_times_bestseller",
@@ -33,8 +33,6 @@ const SUBJECTS = [
   "adventure",
   "adventure_stories",
   "action_adventure",
-  "graphic_novels",
-  "comics",
   "biography",
   "autobiography",
   "memoir",
@@ -100,7 +98,6 @@ const SUBJECTS = [
   "queer_fiction",
   "women_authors",
   "african_american_fiction",
-  "translated_literature",
   "nobel_prize_in_literature",
   "pulitzer_prize",
   "booker_prize",
@@ -116,14 +113,22 @@ type OpenLibrarySubjectWork = {
   edition_count?: number;
   subject?: string[];
   cover_id?: number | null;
-  cover_edition_key?: string | null;
   availability?: { isbn?: string };
 };
+
+export function isEnglishLatinText(text: string): boolean {
+  if (!text) return false;
+  // Disallow CJK, Cyrillic, Greek, Arabic, Hebrew, Hangul, Thai, Devanagari
+  const nonLatinRegex = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\u0400-\u04FF\u0370-\u03FF\u0600-\u06FF\uac00-\ud7af\u0e00-\u0e7f\u0900-\u097f]/;
+  if (nonLatinRegex.test(text)) return false;
+  // Must contain ASCII letters
+  return /[a-zA-Z]/.test(text);
+}
 
 function generateDescription(title: string, authors: string[], subjects: string[] = []): string {
   const authorStr = authors.length ? authors.join(", ") : "an uncredited author";
   const primarySubjects = subjects
-    .filter((s) => typeof s === "string" && s.length < 35 && !s.includes("nyt:") && !s.includes("Level-"))
+    .filter((s) => typeof s === "string" && s.length < 35 && !s.includes("nyt:") && !s.includes("Level-") && isEnglishLatinText(s))
     .slice(0, 3);
 
   if (primarySubjects.length > 0) {
@@ -147,16 +152,15 @@ async function fetchSubjectBatch(
   const url = `https://openlibrary.org/subjects/${encodeURIComponent(subject)}.json?limit=${limit}&offset=${offset}`;
   const response = await fetch(url, {
     headers: {
-      "User-Agent": "BadreadsCatalogHarvester/2.0 (https://badreads.local; catalog@badreads.local)",
+      "User-Agent": "BadreadsCatalogHarvester/3.0 (https://badreads.local; catalog@badreads.local)",
     },
   });
 
   if (!response.ok) {
     if (response.status === 429) {
-      // Rate limited: wait 2s and retry once
       await new Promise((r) => setTimeout(r, 2000));
       const retry = await fetch(url, {
-        headers: { "User-Agent": "BadreadsCatalogHarvester/2.0" },
+        headers: { "User-Agent": "BadreadsCatalogHarvester/3.0" },
       });
       if (retry.ok) {
         const data = (await retry.json()) as { works?: OpenLibrarySubjectWork[] };
@@ -174,8 +178,8 @@ export async function harvestOpenLibrary(
   targetCount = 10000,
   options: { concurrency?: number; delayMs?: number } = {},
 ): Promise<BookImportItem[]> {
-  const delayMs = options.delayMs ?? 150;
-  const concurrency = options.concurrency ?? 4;
+  const delayMs = options.delayMs ?? 100;
+  const concurrency = options.concurrency ?? 6;
   const collectedMap = new Map<string, BookImportItem>();
 
   // Pre-populate with our curated starter catalog
@@ -183,18 +187,19 @@ export async function harvestOpenLibrary(
   if (fs.existsSync(starterPath)) {
     const starterBooks = JSON.parse(fs.readFileSync(starterPath, "utf-8")) as BookImportItem[];
     for (const b of starterBooks) {
-      collectedMap.set(b.providerWorkId.toUpperCase(), b);
+      if (isEnglishLatinText(b.title)) {
+        collectedMap.set(b.providerWorkId.toUpperCase(), b);
+      }
     }
     // eslint-disable-next-line no-console
     console.log(`Loaded ${collectedMap.size} seed books from starter-catalog.json`);
   }
 
   // eslint-disable-next-line no-console
-  console.log(`Harvesting Open Library subjects to reach ~${targetCount} books (concurrency: ${concurrency})...`);
+  console.log(`Harvesting Open Library subjects for ~${targetCount} English books with verified cover IDs...`);
 
-  // Work queue of subject requests: multiple pages per subject
   const tasks: Array<{ subject: string; offset: number }> = [];
-  for (let page = 0; page < 4; page++) {
+  for (let page = 0; page < 5; page++) {
     for (const subject of SUBJECTS) {
       tasks.push({ subject, offset: page * 100 });
     }
@@ -224,26 +229,27 @@ export async function harvestOpenLibrary(
             if (collectedMap.has(workId)) continue;
 
             const title = cleanTitle(work.title ?? "");
-            if (!title || title.length < 2 || title.length > 250) continue;
-            if (/^[\d\W_]+$/.test(title)) continue; // skip pure symbols/numbers
+            if (!title || title.length < 2 || title.length > 200) continue;
+            // Strict English Latin check
+            if (!isEnglishLatinText(title)) continue;
 
             const authors = (work.authors ?? [])
               .map((a) => a.name?.trim())
-              .filter((name): name is string => Boolean(name && name.length > 1 && name.length < 100));
+              .filter((name): name is string => Boolean(name && name.length > 1 && name.length < 80 && isEnglishLatinText(name)));
 
             if (authors.length === 0) continue;
 
-            const toneIndex = collectedMap.size % COVER_TONES.length;
-            const coverUrl = work.cover_id
+            // Only generate cover URL when there is a valid numeric cover ID
+            const coverUrl = work.cover_id && typeof work.cover_id === "number" && work.cover_id > 0
               ? `https://covers.openlibrary.org/b/id/${work.cover_id}-M.jpg`
-              : work.cover_edition_key
-                ? `https://covers.openlibrary.org/b/olid/${work.cover_edition_key}-M.jpg`
-                : `https://covers.openlibrary.org/b/olid/${workId}-M.jpg`;
+              : null;
+
+            const toneIndex = collectedMap.size % COVER_TONES.length;
             const item: BookImportItem = {
               providerWorkId: workId,
               title,
               authors,
-              firstPublished: work.first_publish_year && work.first_publish_year > 1000 && work.first_publish_year <= new Date().getFullYear() + 1
+              firstPublished: work.first_publish_year && work.first_publish_year > 1200 && work.first_publish_year <= new Date().getFullYear() + 1
                 ? work.first_publish_year
                 : null,
               description: generateDescription(title, authors, work.subject),
@@ -257,7 +263,7 @@ export async function harvestOpenLibrary(
 
           if (taskIndex % 10 === 0 || collectedMap.size >= targetCount) {
             // eslint-disable-next-line no-console
-            console.log(`Progress: ${collectedMap.size}/${targetCount} unique books collected...`);
+            console.log(`Progress: ${collectedMap.size}/${targetCount} verified English books collected...`);
           }
         })
         .catch((err) => {
@@ -276,7 +282,7 @@ export async function harvestOpenLibrary(
 
   const finalItems = Array.from(collectedMap.values());
   // eslint-disable-next-line no-console
-  console.log(`✓ Harvesting complete: ${finalItems.length} unique, verified books assembled.`);
+  console.log(`✓ Harvesting complete: ${finalItems.length} unique, verified English books assembled.`);
   return finalItems;
 }
 
@@ -286,7 +292,7 @@ async function main() {
   const target = targetArg ? parseInt(targetArg, 10) : 10000;
   const doImport = args.includes("--import") || args.includes("--save-and-import");
 
-  const books = await harvestOpenLibrary(target, { concurrency: 6, delayMs: 80 });
+  const books = await harvestOpenLibrary(target, { concurrency: 8, delayMs: 60 });
 
   const outputPath = path.resolve(process.cwd(), "src/data/open-library-10k.json");
   // eslint-disable-next-line no-console
@@ -298,7 +304,7 @@ async function main() {
   if (doImport) {
     // eslint-disable-next-line no-console
     console.log("Starting bulk database import into PostgreSQL...");
-    await importBooksToDatabase(books, { batchSize: 200 });
+    await importBooksToDatabase(books, { batchSize: 250 });
   }
 }
 

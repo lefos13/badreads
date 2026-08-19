@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
       `script-src 'self' 'unsafe-inline'${development ? " 'unsafe-eval'" : ""}`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: https://covers.openlibrary.org",
+      "img-src 'self' data: https://covers.openlibrary.org https://*.archive.org https://archive.org https://*.us.archive.org https://images.unsplash.com",
       "connect-src 'self' https://openlibrary.org",
       "object-src 'none'",
       "base-uri 'self'",
@@ -41,6 +41,9 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "covers.openlibrary.org" },
+      { protocol: "https", hostname: "*.archive.org" },
+      { protocol: "https", hostname: "archive.org" },
+      { protocol: "https", hostname: "*.us.archive.org" },
       { protocol: "https", hostname: "images.unsplash.com" },
     ],
   },

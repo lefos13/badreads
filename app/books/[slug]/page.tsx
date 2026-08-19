@@ -79,6 +79,7 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
       <section className="book-hero">
         <div className="page-width book-layout">
           <div className={`book-detail-cover cover-${book.coverTone}`}>
+            <span className="cover-title">{book.title}</span>
             {book.coverUrl ? (
               <img
                 alt={`Cover of ${book.title}`}
@@ -86,9 +87,7 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
                 loading="eager"
                 src={book.coverUrl}
               />
-            ) : (
-              <span className="cover-title">{book.title}</span>
-            )}
+            ) : null}
           </div>
           <div>
             <span className="eyebrow mono">The case against / {book.firstPublished ?? "unknown year"}</span>

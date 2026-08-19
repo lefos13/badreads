@@ -1,6 +1,6 @@
-import bottom100Seed from "@/src/data/bottom-100-seed.json";
-import { calculateBadnessSummary } from "@/src/domain/core";
-import type { BookWork, Profile, Roast } from "@/src/domain/types";
+import bottom100Seed from "./bottom-100-seed.json";
+import { calculateBadnessSummary } from "../domain/core";
+import type { BookWork, Profile, Roast } from "../domain/types";
 
 const baseProfiles: Profile[] = [
   {

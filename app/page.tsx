@@ -16,13 +16,18 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   const session = await getSession();
   const store = getDomainStore();
-  const [books, feed] = await Promise.all([store.listBooks(), store.listFeed(session?.user?.id)]);
-  const previewRoasts = feed.slice(0, 3);
-  const [summariesList, reactionStates] = await Promise.all([
-    Promise.all(books.map(async (book) => [book.id, await store.getBookSummary(book.id)] as const)),
-    session?.user?.id ? store.getUserReactionStates(session.user.id, previewRoasts.map((r) => r.id)) : Promise.resolve<Record<string, ReactionState>>({}),
+  const [bottom100, feed, allBooks] = await Promise.all([
+    store.listBottom100("badness"),
+    store.listFeed(session?.user?.id),
+    store.listBooks(),
   ]);
-  const summaries = new Map(summariesList);
+  const previewRoasts = feed.slice(0, 3);
+  const featuredItems = bottom100.slice(0, 8);
+  const featuredBooks = featuredItems.map((item) => item.book);
+  const summaries = new Map(featuredItems.map((item) => [item.book.id, item.summary]));
+  const reactionStates = session?.user?.id
+    ? await store.getUserReactionStates(session.user.id, previewRoasts.map((r) => r.id))
+    : {};
   return (
     <main>
       <section className="hero">
@@ -52,7 +57,7 @@ export default async function HomePage() {
           <p>Popular books, unpopular opinions, and enough evidence to make the group chat pause.</p>
         </div>
         <div className="book-grid">
-          {books.map((book) => {
+          {featuredBooks.map((book) => {
             const summary = summaries.get(book.id) ?? { average: null, count: 0, worstCount: 0 };
             return <BookCard key={book.id} book={book} average={summary.average} roastCount={summary.count} />;
           })}
@@ -67,7 +72,7 @@ export default async function HomePage() {
         <div className="feed-grid">
           <div className="roast-list">
             {previewRoasts.map((roast) => {
-              const book = books.find((candidate) => candidate.id === roast.bookId);
+              const book = allBooks.find((candidate) => candidate.id === roast.bookId);
               return book ? <RoastCard bookSlug={book.slug} bookTitle={book.title} key={roast.id} reactionState={reactionStates[roast.id]} roast={roast} /> : null;
             })}
           </div>

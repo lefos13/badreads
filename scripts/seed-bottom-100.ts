@@ -113,19 +113,21 @@ export async function seedBottom100ToDatabase() {
           updatedAt: sql`excluded.updated_at`,
         },
       });
-
-    // Identifiers
-    const idRows = chunk.flatMap((b) => [
-      { bookWorkId: b.id, scheme: "OPEN_LIBRARY_WORK", value: b.providerWorkId },
-      ...(b.isbn ? [{ bookWorkId: b.id, scheme: "ISBN", value: b.isbn.replace(/[^0-9X]/gi, "") }] : []),
-    ]);
-
-    await db.insert(bookIdentifiers).values(idRows).onConflictDoNothing();
   }
 
   // Fetch actual database IDs for books
   const dbWorks = await db.select({ id: bookWorks.id, providerWorkId: bookWorks.providerWorkId }).from(bookWorks);
   const workMap = new Map(dbWorks.map((w) => [w.providerWorkId.toUpperCase(), w.id]));
+
+  // Identifiers
+  const idRows = data.books.flatMap((b) => {
+    const resolvedBookId = workMap.get(b.providerWorkId.toUpperCase()) ?? b.id;
+    return [
+      { bookWorkId: resolvedBookId, scheme: "OPEN_LIBRARY_WORK", value: b.providerWorkId },
+      ...(b.isbn ? [{ bookWorkId: resolvedBookId, scheme: "ISBN", value: b.isbn.replace(/[^0-9X]/gi, "") }] : []),
+    ];
+  });
+  await db.insert(bookIdentifiers).values(idRows).onConflictDoNothing();
 
   // 4. Roasts
   for (let i = 0; i < data.roasts.length; i += BATCH_SIZE) {

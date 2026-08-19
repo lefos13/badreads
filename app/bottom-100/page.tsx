@@ -91,6 +91,7 @@ export default async function Bottom100Page({ searchParams }: Bottom100PageProps
 
             <div className="bottom-100-main">
               <div className={`bottom-100-cover cover-${item.book.coverTone}`}>
+                <span className="cover-title">{item.book.title}</span>
                 {item.book.coverUrl ? (
                   <img
                     alt={`Cover of ${item.book.title}`}
@@ -98,9 +99,7 @@ export default async function Bottom100Page({ searchParams }: Bottom100PageProps
                     loading="lazy"
                     src={item.book.coverUrl}
                   />
-                ) : (
-                  <span className="cover-title">{item.book.title}</span>
-                )}
+                ) : null}
               </div>
 
               <div className="bottom-100-details">

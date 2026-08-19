@@ -11,6 +11,7 @@ export function BookCard({ book, average, roastCount = 0 }: BookCardProps) {
   return (
     <Link className="book-card" href={`/books/${book.slug}`}>
       <div className={`book-cover cover-${book.coverTone}`}>
+        <span className="cover-title">{book.title}</span>
         {book.coverUrl ? (
           <img
             alt={`Cover of ${book.title}`}
@@ -18,9 +19,7 @@ export function BookCard({ book, average, roastCount = 0 }: BookCardProps) {
             loading="lazy"
             src={book.coverUrl}
           />
-        ) : (
-          <span className="cover-title">{book.title}</span>
-        )}
+        ) : null}
       </div>
       <h3>{book.title}</h3>
       <p className="book-meta">{book.authors.join(", ")} · {book.firstPublished ?? "unknown year"}</p>
