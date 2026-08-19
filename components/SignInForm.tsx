@@ -4,7 +4,15 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { authClient } from "@/src/lib/auth-client";
 import { requestDevBypassMagicLinkAction } from "@/app/actions";
-export function SignInForm({ demoMode, registrationEnabled }: { demoMode: boolean; registrationEnabled: boolean }) {
+export function SignInForm({
+  demoMode,
+  registrationEnabled,
+  allowDevBypass = false,
+}: {
+  demoMode: boolean;
+  registrationEnabled: boolean;
+  allowDevBypass?: boolean;
+}) {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +45,7 @@ export function SignInForm({ demoMode, registrationEnabled }: { demoMode: boolea
     setMessage(null);
     setPending(true);
 
-    if (email.trim().toLowerCase() === "lefterisevagelinos1996@gmail.com") {
+    if (allowDevBypass && email.trim().toLowerCase() === "lefterisevagelinos1996@gmail.com") {
       const result = await requestDevBypassMagicLinkAction(email);
       setPending(false);
       if (result.ok && result.url) {
@@ -81,7 +89,9 @@ export function SignInForm({ demoMode, registrationEnabled }: { demoMode: boolea
         </div>
         <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
           <button className="button button-primary" disabled={pending || !registrationEnabled} type="submit">{pending ? "Sending…" : registrationEnabled ? "Send me a magic link" : "Registration paused"}</button>
-          <button className="button button-quiet" disabled={pending} onClick={() => handleQuickBypass("lefterisevagelinos1996@gmail.com")} type="button">1-Click Local DB Bypass (Lefteris)</button>
+          {allowDevBypass ? (
+            <button className="button button-quiet" disabled={pending} onClick={() => handleQuickBypass("lefterisevagelinos1996@gmail.com")} type="button">1-Click Local DB Bypass (Lefteris)</button>
+          ) : null}
         </div>
       </form>
       {message ? <p aria-live="polite" className="form-success">{message}</p> : null}

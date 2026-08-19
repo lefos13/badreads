@@ -34,6 +34,5 @@ test("sign-in page exposes authentication surface according to runtime mode", as
     await expect(page.getByRole("heading", { name: /Come say the quiet part/ })).toBeVisible();
     await expect(page.getByRole("textbox", { name: /Email address/ })).toBeVisible();
     await expect(page.getByRole("button", { name: /Send me a magic link/ })).toBeVisible();
-    await expect(page.getByRole("button", { name: /1-Click Local DB Bypass \(Lefteris\)/ })).toBeVisible();
   }
 });

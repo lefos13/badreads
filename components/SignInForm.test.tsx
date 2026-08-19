@@ -18,14 +18,19 @@ describe("SignInForm", () => {
     expect(screen.getByRole("link", { name: /Continue in local demo/i })).toBeInTheDocument();
   });
 
-  it("renders email input and bypass buttons when demoMode is false", () => {
+  it("renders email input and sends magic link without bypass button by default", () => {
     render(<SignInForm demoMode={false} registrationEnabled={true} />);
 
     expect(screen.getByLabelText(/Email address/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Send me a magic link/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /1-Click Local DB Bypass \(Lefteris\)/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /1-Click Local DB Bypass \(Lefteris\)/i })).not.toBeInTheDocument();
   });
 
+  it("renders dev bypass button only when allowDevBypass is true", () => {
+    render(<SignInForm allowDevBypass={true} demoMode={false} registrationEnabled={true} />);
+
+    expect(screen.getByRole("button", { name: /1-Click Local DB Bypass \(Lefteris\)/i })).toBeInTheDocument();
+  });
   it("allows typing an email address", () => {
     render(<SignInForm demoMode={false} registrationEnabled={true} />);
 
