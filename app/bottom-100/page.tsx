@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Bottom100SortControls } from "@/components/Bottom100SortControls";
 import { BADNESS_LABELS } from "@/src/domain/core";
@@ -93,10 +94,11 @@ export default async function Bottom100Page({ searchParams }: Bottom100PageProps
               <div className={`bottom-100-cover cover-${item.book.coverTone}`}>
                 <span className="cover-title">{item.book.title}</span>
                 {item.book.coverUrl ? (
-                  <img
+                  <Image
                     alt={`Cover of ${item.book.title}`}
                     className="book-cover-image"
-                    loading="lazy"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 150px"
                     src={item.book.coverUrl}
                   />
                 ) : null}

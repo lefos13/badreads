@@ -39,6 +39,7 @@ const nextConfig: NextConfig = {
     }];
   },
   images: {
+    minimumCacheTTL: 2592000,
     remotePatterns: [
       { protocol: "https", hostname: "covers.openlibrary.org" },
       { protocol: "https", hostname: "*.archive.org" },

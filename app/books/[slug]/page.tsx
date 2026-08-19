@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookRoastControls, type BookSortOption } from "@/components/BookRoastControls";
@@ -81,10 +82,12 @@ export default async function BookPage({ params, searchParams }: BookPageProps) 
           <div className={`book-detail-cover cover-${book.coverTone}`}>
             <span className="cover-title">{book.title}</span>
             {book.coverUrl ? (
-              <img
+              <Image
                 alt={`Cover of ${book.title}`}
                 className="book-cover-image"
-                loading="eager"
+                fill
+                priority
+                sizes="(max-width: 768px) 100vw, 300px"
                 src={book.coverUrl}
               />
             ) : null}

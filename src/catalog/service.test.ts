@@ -46,5 +46,5 @@ describe("catalog service local-first search", () => {
 
     const upstreamResult = await searchCatalog("UniqueNovelTitle12345");
     expect(upstreamResult).toBeDefined();
-  });
+  }, 15_000);
 });

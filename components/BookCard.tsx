@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { BookWork } from "@/src/domain/types";
 
@@ -13,10 +14,11 @@ export function BookCard({ book, average, roastCount = 0 }: BookCardProps) {
       <div className={`book-cover cover-${book.coverTone}`}>
         <span className="cover-title">{book.title}</span>
         {book.coverUrl ? (
-          <img
+          <Image
             alt={`Cover of ${book.title}`}
             className="book-cover-image"
-            loading="lazy"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             src={book.coverUrl}
           />
         ) : null}

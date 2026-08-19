@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { SearchForm } from "@/components/SearchForm";
 import { searchCatalog } from "@/src/catalog/service";
@@ -48,12 +49,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             return (
             <Link className="search-result" href={localSlug ? `/books/${localSlug}` : `/catalog/choose?providerWorkId=${encodeURIComponent(book.providerWorkId)}`} key={book.providerWorkId}>
               {book.coverUrl ? (
-                <img
+                <Image
                   alt=""
                   aria-hidden="true"
                   className="search-result-cover-image"
-                  loading="lazy"
+                  height={80}
                   src={book.coverUrl}
+                  width={55}
                 />
               ) : (
                 <span aria-hidden="true" className="search-result-cover" />
