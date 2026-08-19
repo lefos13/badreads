@@ -79,13 +79,23 @@ async function sendMagicLink({ email, url, token }: { email: string; url: string
       ? "Magic-link sign-in is disabled in local demo mode."
       : "Magic-link email delivery is not configured.");
   }
-  const response = await resend.emails.send({
-    from,
-    to: [email],
-    subject: "Your Badreads door is open",
-    html: `<p>One click and you can tell the truth about that book.</p><p><a href="${url}">Enter Badreads</a></p><p>This link expires in five minutes.</p>`,
-  });
-  if (response.error) throw new Error("Unable to send your sign-in email.");
+  try {
+    const response = await resend.emails.send({
+      from,
+      to: [email],
+      subject: "Your Badreads door is open",
+      html: `<p>One click and you can tell the truth about that book.</p><p><a href="${url}">Enter Badreads</a></p><p>This link expires in five minutes.</p>`,
+    });
+    if (response.error) {
+      // eslint-disable-next-line no-console
+      console.error("[Resend Error]:", JSON.stringify(response.error, null, 2));
+      throw new Error(`Unable to send your sign-in email: ${response.error.message || response.error.name}`);
+    }
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[Resend Send Exception]:", err);
+    throw err instanceof Error ? err : new Error("Unable to send your sign-in email.");
+  }
 }
 
 const magicLinkPlugin = magicLink({
