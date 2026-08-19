@@ -3,15 +3,16 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { magicLink } from "better-auth/plugins";
 import { Resend } from "resend";
 import { db } from "@/src/db";
-import { getAuthRuntimeMode, hasEmailDeliveryConfig, isDemoMode } from "./runtime-config";
+import { cleanEnvString, getAuthRuntimeMode, hasEmailDeliveryConfig, isDemoMode } from "./runtime-config";
 import { normalizeAppUrl } from "./url-config";
 import { authDatabaseOptions } from "./auth-database";
 
-const secret = process.env.BETTER_AUTH_SECRET?.trim() || (process.env.NODE_ENV === "production" ? null : "badreads-local-development-secret-please-change");
+const secret = cleanEnvString(process.env.BETTER_AUTH_SECRET) || (process.env.NODE_ENV === "production" ? null : "badreads-local-development-secret-please-change");
 if (!secret) throw new Error("BETTER_AUTH_SECRET is required in production.");
 
-const resend = hasEmailDeliveryConfig() ? new Resend(process.env.RESEND_API_KEY) : null;
-const from = process.env.RESEND_FROM_EMAIL?.trim() || "Badreads <onboarding@resend.dev>";
+const resendApiKey = cleanEnvString(process.env.RESEND_API_KEY);
+const from = cleanEnvString(process.env.RESEND_FROM_EMAIL) || "Badreads <onboarding@resend.dev>";
+const resend = hasEmailDeliveryConfig() && resendApiKey ? new Resend(resendApiKey) : null;
 export const BYPASS_DEMO_EMAILS = [
   "lefterisevagelinos1996@gmail.com",
   "demo@badreads.local",
